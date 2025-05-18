@@ -14,8 +14,8 @@ class DownloadThread(QThread):
         self.save_path = save_path
         self.service = None  
         self.downloaded_filename = ""
-        self.ffmpeg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg.exe')
-        os.environ["PATH"] += os.pathsep + os.path.dirname(os.path.abspath(__file__))
+        self.ffmpeg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg\\ffmpeg.exe')
+        os.environ["PATH"] += os.pathsep + self.ffmpeg_path
 
     def run(self):
         
@@ -32,7 +32,7 @@ class DownloadThread(QThread):
 
         quality_map = {"Low (64kbps)": "64", "Medium (128kbps)": "128", "High (192kbps)": "192"}
         bitrate = quality_map.get(self.quality_selected, "192")
-        ffmpeg_dir = os.path.dirname(os.path.abspath(__file__))
+        ffmpeg_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg')
         
         ydl_opts = {
             'ffmpeg_location': f'{ffmpeg_dir}',

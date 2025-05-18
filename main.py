@@ -81,7 +81,7 @@ class MainGUI(QWidget):
         
         side_by_side_layout.addLayout(horizontal_layout)
         vertical_divider = QFrame()
-        vertical_divider.setFrameShape(QFrame.Shape.VLine)  # Vertical line
+        vertical_divider.setFrameShape(QFrame.Shape.VLine) 
         vertical_divider.setFrameShadow(QFrame.Shadow.Sunken)
         side_by_side_layout.addWidget(vertical_divider)
         stem_layout = QVBoxLayout()
@@ -93,7 +93,7 @@ class MainGUI(QWidget):
         self.stem_file_button.clicked.connect(self.select_file_location)
 
         self.stem_options_dropdown = QComboBox(self)
-        self.stem_options_dropdown.addItems(["Vocals Only", "4 Stem Split (Fast but lower quality)", "4 Stem Split (Higher Quality But Slower)", "4 Stem Split (MDX)", "6 Stem Split (Guitar + Piano)"])
+        self.stem_options_dropdown.addItems(["Vocals", "Bass", "Drums", "Guitar", "Piano", "Other"])
         self.stem_options_dropdown.setEnabled(False)
         stem_layout.addWidget(self.stem_options_dropdown)
         stem_layout.addWidget(self.stem_file_button)
@@ -120,9 +120,7 @@ class MainGUI(QWidget):
    
         
 
-    def set_url(self, input_dict):
-
-         
+    def set_url(self, input_dict):         
         self.results_window = ResultsWindow(input_dict, self)
         self.results_window.finished.connect(self.on_link_clicked)
         self.results_window.exec()
@@ -196,21 +194,24 @@ class MainGUI(QWidget):
 
     
 
-    # Returns model names from dropdown selection. (model, args)
+    
     def convert_stems(self):
         stem = self.stem_options_dropdown.currentText()
         
         match stem:
-            case "Vocals Only":
-                return ("htdemucs",("--two-stems","vocals"))
-            case "4 Stem Split (Fast but lower quality)":
-                return ("htdemucs",None)
-            case "4 Stem Split (Higher Quality But Slower)":
-                return ("htdemucs_ft",None)
-            case "4 Stem Split (MDX)":
-                return ("mdx",None)
-            case "6 Stem Split (Guitar + Piano)":
-                return ("htdemucs_6s",None)
+            case "Vocals":
+                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
+            case "Bass":
+                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
+            case "Drums":
+                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
+            case "Guitar":
+                return ["htdemucs_6s"]
+            case "Piano":
+                return ["htdemucs_6s"]
+            case "Other":
+                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
+            
 
     def split_complete(self, message):
         print(message)
@@ -228,7 +229,7 @@ class MainGUI(QWidget):
         self.progress_bar.show()
        
 
-    # Called when the download thread finishes
+    
     def download_complete(self, success, message, file_path):
         if success:
             self.select_file_location(file_path)

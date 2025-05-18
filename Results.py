@@ -4,7 +4,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 import requests
 
 class ClickableLabel(QLabel):
-    clicked = pyqtSignal(str)  # Signal will emit the URL
+    clicked = pyqtSignal(str) 
 
     def __init__(self, text, url, parent=None):
         super().__init__(text, parent)
