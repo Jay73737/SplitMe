@@ -12,18 +12,10 @@ from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
 
 import YoutubeDownloader, Downloader, StemSplitter
+from Results import ResultsWindow
 
 
-class ClickableLabel(QLabel):
-    clicked = pyqtSignal(str)  # Signal will emit the URL
 
-    def __init__(self, text, url, parent=None):
-        super().__init__(text, parent)
-        self.url = url
-
-    def mousePressEvent(self, event):
-        self.clicked.emit(self.url)
-        super().mousePressEvent(event)
 
 class MainGUI(QWidget):  
 
@@ -129,22 +121,11 @@ class MainGUI(QWidget):
         
 
     def set_url(self, input_dict):
-        # Clear previous links
-        while self.link_layout.count():
-            child = self.link_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
-        self.link_objects = []
-        for idx, i in enumerate(input_dict):
-            if i['url']:
-                self.link_objects.append(i)
-                label = ClickableLabel(f'<a href="{i["url"]}">{i["title"]}</a>', i['url'])
-                label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
-                label.setOpenExternalLinks(False)  # We'll handle clicks ourselves
-                label.clicked.connect(self.on_link_clicked)
-                self.link_layout.addWidget(label)
-            else:
-                print(i)
+
+         
+        self.results_window = ResultsWindow(input_dict, self)
+        self.results_window.finished.connect(self.on_link_clicked)
+        self.results_window.exec()
 
     def on_link_clicked(self, url):
         self.url_download = url
@@ -156,7 +137,7 @@ class MainGUI(QWidget):
         self.progress_bar.hide()
         self.url_input.setText("")
         
-        # Clear previous links
+      
 
 
     def search_youtube(self):
@@ -196,7 +177,7 @@ class MainGUI(QWidget):
             self.save_path = folder
             self.save_label.setText(f"Save Location: {folder}")
 
-    # Callback function for download button.
+  
     def download_video(self):
         self.progress_bar.show()
         url = self.url_download

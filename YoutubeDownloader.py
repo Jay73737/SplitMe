@@ -36,7 +36,7 @@ class YoutubeDownloader(QThread):
                 title = item['snippet']['title']
                 url = f"https://www.youtube.com/watch?v={video_id}"
                 description = item['snippet']['description']
-                results.append({'title': title, 'url': url, 'description': description})
+                results.append({'title': title, 'url': url, 'description': description, 'thumbnail': item['snippet']['thumbnails']['default']['url']})
             except KeyError:
                 self.error.emit(item)
         return results
