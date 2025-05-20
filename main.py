@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from PyQt6.QtWidgets import (
     QApplication, QVBoxLayout, QLabel, QLineEdit, QPushButton,
     QFileDialog, QComboBox, QMessageBox, QProgressBar, 
-    QCheckBox, QWidget, QRadioButton,QButtonGroup,QHBoxLayout, QFrame
+    QCheckBox, QWidget, QRadioButton,QButtonGroup,QHBoxLayout, QFrame, QSpinBox, QSizePolicy
 )
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -22,16 +22,22 @@ class MainGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.url_download = None
-        horizontal_layout = QVBoxLayout()
+
+        self.instrument_dict = {"Vocals":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
+                                "Bass":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
+                                "Drums":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"],
+                                "Guitar":["htdemucs_6s"],
+                                 "Piano":["htdemucs_6s"],
+                                  "Other":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]}
+        self.horizontal_layout = QVBoxLayout()
         self.setWindowTitle("Stem Splitter")
         self.setGeometry(200, 400, 400, 350)
         self.main_layout = QVBoxLayout()
-        side_by_side_layout = QHBoxLayout()
+        self.side_by_side_layout = QHBoxLayout()
         
         self.search_button = QPushButton("Search")
         self.search_button.clicked.connect(self.search_youtube)
-        horizontal_layout.addWidget(self.search_button)
-
+        self.horizontal_layout.addWidget(self.search_button)
 
         self.platform_yt = QRadioButton("YouTube", self)
         self.platform_yt.setChecked(True)
@@ -39,88 +45,120 @@ class MainGUI(QWidget):
         self.platform_group = QButtonGroup(self)
         self.platform_group.addButton(self.platform_yt)
         self.platform_group.addButton(self.platform_soundcloud)
-        horizontal_layout.addWidget(self.platform_yt)
-        horizontal_layout.addWidget(self.platform_soundcloud)
-    
+        self.horizontal_layout.addWidget(self.platform_yt)
+        self.horizontal_layout.addWidget(self.platform_soundcloud)    
 
         self.url_label = QLabel("URL/Search:")
-        horizontal_layout.addWidget(self.url_label)
+        self.horizontal_layout.addWidget(self.url_label)
 
         self.url_input = QLineEdit(self)
-        horizontal_layout.addWidget(self.url_input)
+        self.horizontal_layout.addWidget(self.url_input)
         self.link_layout = QVBoxLayout()
-        horizontal_layout.addLayout(self.link_layout)
-        self.main_layout.addLayout(self.link_layout)
+        self.horizontal_layout.addLayout(self.link_layout)
+
         self.url_input.returnPressed.connect(self.search_youtube)
         
         self.format_label = QLabel("Select Format:")
-        horizontal_layout.addWidget(self.format_label)
+        self.horizontal_layout.addWidget(self.format_label)
 
         self.format_dropdown = QComboBox(self)
         self.format_dropdown.addItems(["Video - mp4", "Audio - mp3", "Audio - wav", "Audio - m4a", "Audio - aac", "Audio - flac", "Audio - opus"])
-        horizontal_layout.addWidget(self.format_dropdown)
+        self.horizontal_layout.addWidget(self.format_dropdown)
 
         
         self.quality_label = QLabel("Select Audio Quality:")
-        horizontal_layout.addWidget(self.quality_label)
 
+        self.horizontal_layout.addWidget(self.quality_label)
         self.quality_dropdown = QComboBox(self)
         self.quality_dropdown.addItems(["Low (64kbps)", "Medium (128kbps)", "High (192kbps)"])
-        horizontal_layout.addWidget(self.quality_dropdown)
-
-        
+        self.horizontal_layout.addWidget(self.quality_dropdown)        
         self.save_button = QPushButton("Select Save Location")
         self.save_button.clicked.connect(self.select_save_location)
-        horizontal_layout.addWidget(self.save_button)
+        self.horizontal_layout.addWidget(self.save_button)
         self.download_button = QPushButton("Download")
         self.download_button.clicked.connect(self.download_video)
         self.save_path = ""
-        self.save_label = QLabel(f"Save Location: {os.path.join(os.path.dirname(os.path.abspath(__file__)), 'Splitty')} ")
-        horizontal_layout.addWidget(self.save_label)
-        horizontal_layout.addWidget(self.download_button)
-        
-        side_by_side_layout.addLayout(horizontal_layout)
-        vertical_divider = QFrame()
-        vertical_divider.setFrameShape(QFrame.Shape.VLine) 
-        vertical_divider.setFrameShadow(QFrame.Shadow.Sunken)
-        side_by_side_layout.addWidget(vertical_divider)
-        stem_layout = QVBoxLayout()
+        self.save_label = QLabel(f"Save Location: {os.path.join(os.path.dirname(os.path.abspath(__file__)), 'SplitMe')} ")
+        self.horizontal_layout.addWidget(self.save_label)
+        self.horizontal_layout.addWidget(self.download_button)        
+        self.side_by_side_layout.addLayout(self.horizontal_layout)
+
+        self.vertical_divider = QFrame()
+        self.vertical_divider.setFrameShape(QFrame.Shape.VLine) 
+        self.vertical_divider.setFrameShadow(QFrame.Shadow.Sunken)
+        self.side_by_side_layout.addWidget(self.vertical_divider)
+
+        self.stem_layout = QVBoxLayout()        
         self.split_stems_file = QLabel("Loaded File: ")
-        stem_layout.addWidget(self.split_stems_file)
+        self.stem_layout.addWidget(self.split_stems_file)        
         self.split_button = QPushButton("Split Stems")
         self.split_button.clicked.connect(self.split_stems)
         self.stem_file_button = QPushButton("Select File")
         self.stem_file_button.clicked.connect(self.select_file_location)
 
-        self.stem_options_dropdown = QComboBox(self)
-        self.stem_options_dropdown.addItems(["Vocals", "Bass", "Drums", "Guitar", "Piano", "Other"])
-        self.stem_options_dropdown.setEnabled(False)
-        stem_layout.addWidget(self.stem_options_dropdown)
-        stem_layout.addWidget(self.stem_file_button)
-        stem_layout.addWidget(self.split_button)
-        stem_layout.addStretch()
-        side_by_side_layout.addLayout(stem_layout)
+        self.checkbox_layout = QVBoxLayout()
+        checkbox_labels = self.instrument_dict.keys()
+        self.split_stems_checkbox_group = []
+        for label in checkbox_labels:
+            checkbox = QCheckBox(label)
+            checkbox.setChecked(False)
+            checkbox.stateChanged.connect(self.on_checkbox_state_changed)
+            self.split_stems_checkbox_group.append(checkbox)
+            self.checkbox_layout.addWidget(checkbox)      
+        self.stem_layout.addLayout(self.checkbox_layout)
+        self.shift_spinbox = QSpinBox(self)
+        self.shift_spinbox.setRange(1, 20)
+        self.shift_spinbox.setValue(1)
+        self.shift_label = QLabel("Shifts:")
+        spinbox_layout = QHBoxLayout()
+        spinbox_layout.addWidget(self.shift_label)
+        spinbox_layout.addWidget(self.shift_spinbox)
+        self.stem_layout.addLayout(spinbox_layout)
+        self.stem_layout.addWidget(self.shift_label)
+        self.stem_layout.addWidget(self.shift_spinbox)
+        self.stem_layout.addWidget(self.stem_file_button)
+        self.stem_layout.addWidget(self.split_button)
+        self.model_checkboxes_layout = QHBoxLayout()
+        self.model_checkboxes_group = []
+        self.stem_layout.addLayout(self.model_checkboxes_layout)
+        self.side_by_side_layout.addLayout(self.stem_layout)
         self.progress_bar = QProgressBar(self)
+        self.progress_bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.progress_bar.setRange(0,0)
         self.progress_bar.hide()
                
-        stem_layout.addWidget(self.download_button)
+        self.horizontal_layout.addWidget(self.download_button)
+        self.progress_layout = QVBoxLayout()
+        self.progress_layout.addLayout(self.side_by_side_layout)        
+        self.progress_layout.addWidget(self.progress_bar)
+        self.setLayout(self.progress_layout)
 
-        progress_layout = QVBoxLayout()
-        progress_layout.addLayout(side_by_side_layout)
+    
+    def on_checkbox_state_changed(self):
+        selected_instruments = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
+        models = []
+        self.model_checkboxes_group = []
+        while self.model_checkboxes_layout.count():
+            item = self.model_checkboxes_layout.itemAt(0)
+            if item is not None:
+                widget = item.widget()
+                self.model_checkboxes_layout.removeWidget(widget)
+                widget.deleteLater()
+        if selected_instruments:
+            for inst in selected_instruments:
+                models.extend(self.instrument_dict[inst])
+            models = list(set(models))
+            if len(models) >= 1:
+                self.model_checkboxes_layout = QHBoxLayout()
+                for model in models:
+                    model_checkbox = QCheckBox(model)
+                    model_checkbox.setChecked(False)
+                    self.model_checkboxes_group.append(model_checkbox)
+                    self.model_checkboxes_layout.addWidget(model_checkbox)
+                self.stem_layout.addLayout(self.model_checkboxes_layout)
         
-        progress_layout.addWidget(self.progress_bar)
-        self.setLayout(progress_layout)
 
-    def toggle_stem_options(self):
-        if self.split_stems_checkbox.isChecked():
-            self.stem_options_dropdown.setEnabled(True)
-        else:
-            self.stem_options_dropdown.setEnabled(False)
-   
-        
-
-    def set_url(self, input_dict):         
+    def set_url(self, input_dict):    
         self.results_window = ResultsWindow(input_dict, self)
         self.results_window.finished.connect(self.on_link_clicked)
         self.results_window.exec()
@@ -158,21 +196,22 @@ class MainGUI(QWidget):
     def select_file_location(self, file_location = None):
         if file_location:
             self.filepath = file_location
-            self.split_stems_file.setText(f"Loaded File: {file_location}")
-            self.stem_options_dropdown.setEnabled(True)
+            if ' ' in self.filepath:
+                self.filepath = f'\"{self.filepath}\"'
+            self.split_stems_file.setText(f"Loaded File: {self.filepath}")
             return
 
         file, _ = QFileDialog.getOpenFileName(self, "Select File", "", "Audio Files (*.mp3 *.wav *.m4a *.aac *.flac *.opus)")
         if file:
             self.filepath = file
             self.split_stems_file.setText(f"Loaded File: {file}")
-            self.stem_options_dropdown.setEnabled(True)
+       
 
 
     def select_save_location(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Download Folder")
         if folder:
-            self.save_path = folder
+            self.save_path = f'\"{folder}\"'
             self.save_label.setText(f"Save Location: {folder}")
 
   
@@ -195,22 +234,19 @@ class MainGUI(QWidget):
     
 
     
-    def convert_stems(self):
-        stem = self.stem_options_dropdown.currentText()
+    def get_models(self):
+
+        selected_models = [checkbox.text() for checkbox in self.model_checkboxes_group if checkbox.isChecked()]
+        if not selected_models:
+            QMessageBox.warning(self, "Error", "Please select at least one model.")
+            return
+        stem_types = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
+        if not stem_types:
+            QMessageBox.warning(self, "Error", "Please select at least one stem type.")
+            return
+        return (selected_models, stem_types)
         
-        match stem:
-            case "Vocals":
-                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
-            case "Bass":
-                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
-            case "Drums":
-                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
-            case "Guitar":
-                return ["htdemucs_6s"]
-            case "Piano":
-                return ["htdemucs_6s"]
-            case "Other":
-                return ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
+        
             
 
     def split_complete(self, message):
@@ -223,7 +259,8 @@ class MainGUI(QWidget):
         if not self.filepath:
             QMessageBox.warning(self, "Error", "Please select or download a file to split.")
             return
-        self.splitter = StemSplitter.StemSplitter(self.convert_stems(), self.filepath)
+        info = self.get_models()
+        self.splitter = StemSplitter.StemSplitter(info[0],info[1], self.filepath, shifts=self.shift_spinbox.value(), keep_all=False)
         self.splitter.finished.connect(self.split_complete)
         self.splitter.start()
         self.progress_bar.show()
