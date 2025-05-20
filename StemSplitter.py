@@ -10,7 +10,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 import os
 
 
-class StemSplitter():#QThread):
+class StemSplitter(QThread):
     finished = pyqtSignal(str)
 
     def __init__(self,model, instruments, file_path, shifts=1, keep_all=False ):
@@ -57,40 +57,23 @@ class StemSplitter():#QThread):
                 self.finished.emit(f"Error: {str(e)}")
                 traceback.print_exc()
 
+    # Combines the outputs of the stems, not sure whether this helps or not, but keeping it for potential future use
     def combine_outputs(self, files, output_path):
 
-        # Read all files and store sample rates and data
         sample_rates = []
         audio_data = []
 
         for file in files:
             rate, data = wavfile.read(file)
             sample_rates.append(rate)
-            audio_data.append(data.astype(np.float32))  # Convert to float for safe averaging
-
-        # Ensure all sample rates match
+            audio_data.append(data.astype(np.float32)) 
         if len(set(sample_rates)) != 1:
-            raise ValueError("All audio files must have the same sample rate")
-
-        # Trim or pad to the same length
+            raise ValueError("All audio files must have the same sample rate") 
         min_length = min([len(d) for d in audio_data])
         audio_data = [d[:min_length] for d in audio_data]
-
-        # Average the audio
         avg_audio = np.mean(audio_data, axis=0)
-
-        # Clip to int16 range and convert back
         avg_audio = np.clip(avg_audio, -32768, 32767).astype(np.int16)
         os.makedirs(output_path.split('.')[0].split('\\')[0], exist_ok=True)
-        # Save to output file
         wavfile.write(output_path, sample_rates[0], avg_audio)
 
 
-
-st = StemSplitter(model=["htdemucs", "mdx", "htdemucs_ft", "mdx_extra"], instruments=["Vocals"], file_path="C:\\Users\\justm\\Desktop\\Code\\New folder\\Black Dog (Remaster).wav")
-#st.split_stems()
-st.combine_outputs(["C:\\Users\\justm\\Desktop\\Code\\New folder\\htdemucs_stems\\htdemucs\\Black Dog (Remaster)\\no_vocals.wav", 
-                    "C:\\Users\\justm\\Desktop\\Code\\New folder\\htdemucs_stems\\htdemucs_ft\\Black Dog (Remaster)\\no_vocals.wav",
-                   "C:\\Users\\justm\\Desktop\\Code\\New folder\\htdemucs_stems\\mdx\\Black Dog (Remaster)\\no_vocals.wav",
-                     "C:\\Users\\justm\\Desktop\\Code\\New folder\\htdemucs_stems\\mdx_extra\\Black Dog (Remaster)\\no_vocals.wav"], "C:\\Users\\justm\\Desktop\\Code\\New folder\\combined\\Black Dog (Remaster)_combined.wav")
-        #self.finished.emit(target_dir)
