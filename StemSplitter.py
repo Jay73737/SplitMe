@@ -12,7 +12,7 @@ import demucs.separate as separate
 import traceback
 from PyQt6.QtCore import QThread, pyqtSignal, QObject
 import os
-
+import ffmpeg
 
 
 
@@ -31,6 +31,11 @@ class StemSplitter(QThread):
         self.paths = []
         self.shifts = shifts
         self.keep_all = keep_all
+        self.ext = file_path.split('.')[-1]
+        if self.ext == 'mp4':
+            ffmpeg.input(file_path).output(file_path.replace('.mp4', '.wav')).run(overwrite_output=True)
+            self.ext = 'wav'
+        self.file_path = file_path.replace('.mp4', '.wav')  
 
     def run(self):
         self.split_stems(self.file_path)
@@ -102,7 +107,12 @@ class StemSplitter(QThread):
               # Reset stdout to original
 
     # Combines the outputs of the stems, not sure whether this helps or not, but keeping it for potential future use
-    def combine_outputs(self, files, output_path):
+    def combine_outputs(self, files, output_path, different_instruments=None):
+        if different_instruments:
+            combining = len(different_instruments)
+            sound_list = []
+            for i in range(combining):
+                sound_list.append(different_instruments[i])
 
         sample_rates = []
         audio_data = []

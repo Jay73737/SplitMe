@@ -206,14 +206,29 @@ class MainGUI(QWidget):
                 self.stem_layout.addLayout(self.model_checkboxes_layout)
         
 
-    def set_url(self, input_dict):    
+    def set_url(self, input_dict):
+    
         self.results_window = ResultsWindow(input_dict, self)
         self.results_window.finished.connect(self.on_link_clicked)
         self.results_window.exec()
 
     def on_link_clicked(self, url):
         self.url_download = url
-        self.url_input.setText(url)   
+        self.url_input.setText(url)
+        if 'playlist' in url:
+            
+            reply = QMessageBox.question(self, "Playlist Detected", "You have selected a playlist. Do you want to download all videos?",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
+                self.url_input.setText(url)
+                self.url_download = url
+            else:
+                self.search_youtube()
+        elif 'video' in url:
+            self.url_input.setText(url)
+            self.url_download = url
+
+          
 
     def show_error(self, error):
         error_message = f"Error: {error}"
@@ -245,7 +260,7 @@ class MainGUI(QWidget):
         if file_location:
             self.filepath = file_location
             if ' ' in self.filepath:
-                self.filepath = f'\"{self.filepath}\"'
+                self.filepath = rf'{self.filepath}'
             self.split_stems_file.setText(f"Loaded File: {self.filepath}")
             return
 
