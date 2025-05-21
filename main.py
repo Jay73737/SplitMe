@@ -23,18 +23,22 @@ class MainGUI(QWidget):
         super().__init__()
         self.url_download = None
 
-        self.instrument_dict = {"Vocals":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
-                                "Bass":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
-                                "Drums":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"],
-                                "Guitar":["htdemucs_6s"],
-                                 "Piano":["htdemucs_6s"],
-                                  "Other":["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]}
-        self.horizontal_layout = QVBoxLayout()
+        self.instrument_dict = {
+            "Vocals": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
+            "Bass": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
+            "Drums": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"],
+            "Guitar": ["htdemucs_6s"],
+            "Piano": ["htdemucs_6s"],
+            "Other": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
+        }
+        
         self.setWindowTitle("Stem Splitter")
-        self.setGeometry(200, 400, 400, 350)
+        self.setGeometry(200, 400, 600, 350)
         self.main_layout = QVBoxLayout()
         self.side_by_side_layout = QHBoxLayout()
-        
+        self.horizontal_layout = QVBoxLayout()
+
+        # --- Left Side (horizontal_layout) ---
         self.search_button = QPushButton("Search")
         self.search_button.clicked.connect(self.search_youtube)
         self.horizontal_layout.addWidget(self.search_button)
@@ -54,7 +58,7 @@ class MainGUI(QWidget):
         self.url_input = QLineEdit(self)
         self.horizontal_layout.addWidget(self.url_input)
         self.link_layout = QVBoxLayout()
-        self.horizontal_layout.addLayout(self.link_layout)
+        self.horizontal_layout.addLayout(self.link_layout, stretch=1)
 
         self.url_input.returnPressed.connect(self.search_youtube)
         
@@ -62,35 +66,41 @@ class MainGUI(QWidget):
         self.horizontal_layout.addWidget(self.format_label)
 
         self.format_dropdown = QComboBox(self)
-        self.format_dropdown.addItems(["Video - mp4", "Audio - mp3", "Audio - wav", "Audio - m4a", "Audio - aac", "Audio - flac", "Audio - opus"])
+        self.format_dropdown.addItems([
+            "Video - mp4", "Audio - mp3", "Audio - wav", "Audio - m4a",
+            "Audio - aac", "Audio - flac", "Audio - opus"
+        ])
         self.horizontal_layout.addWidget(self.format_dropdown)
 
-        
         self.quality_label = QLabel("Select Audio Quality:")
-
         self.horizontal_layout.addWidget(self.quality_label)
         self.quality_dropdown = QComboBox(self)
         self.quality_dropdown.addItems(["Low (64kbps)", "Medium (128kbps)", "High (192kbps)"])
-        self.horizontal_layout.addWidget(self.quality_dropdown)        
+        self.horizontal_layout.addWidget(self.quality_dropdown)
+
         self.save_button = QPushButton("Select Save Location")
         self.save_button.clicked.connect(self.select_save_location)
         self.horizontal_layout.addWidget(self.save_button)
+
         self.download_button = QPushButton("Download")
         self.download_button.clicked.connect(self.download_video)
-        self.save_path = ""
-        self.save_label = QLabel(f"Save Location: {os.path.join(os.path.dirname(os.path.abspath(__file__)), 'SplitMe')} ")
+        self.save_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SplitMe')
+        self.save_label = QLabel(
+            f"Save Location: {os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SplitMe')} "
+        )
         self.horizontal_layout.addWidget(self.save_label)
-        self.horizontal_layout.addWidget(self.download_button)        
-        self.side_by_side_layout.addLayout(self.horizontal_layout)
+        self.horizontal_layout.addWidget(self.download_button)
 
+        # --- Divider ---
         self.vertical_divider = QFrame()
         self.vertical_divider.setFrameShape(QFrame.Shape.VLine) 
         self.vertical_divider.setFrameShadow(QFrame.Shadow.Sunken)
-        self.side_by_side_layout.addWidget(self.vertical_divider)
 
-        self.stem_layout = QVBoxLayout()        
+        # --- Right Side (stem_layout) ---
+        self.stem_layout = QVBoxLayout()
         self.split_stems_file = QLabel("Loaded File: ")
-        self.stem_layout.addWidget(self.split_stems_file)        
+        self.stem_layout.addWidget(self.split_stems_file)
+
         self.split_button = QPushButton("Split Stems")
         self.split_button.clicked.connect(self.split_stems)
         self.stem_file_button = QPushButton("Select File")
@@ -104,34 +114,72 @@ class MainGUI(QWidget):
             checkbox.setChecked(False)
             checkbox.stateChanged.connect(self.on_checkbox_state_changed)
             self.split_stems_checkbox_group.append(checkbox)
-            self.checkbox_layout.addWidget(checkbox)      
+            self.checkbox_layout.addWidget(checkbox)
         self.stem_layout.addLayout(self.checkbox_layout)
+
         self.shift_spinbox = QSpinBox(self)
         self.shift_spinbox.setRange(1, 20)
         self.shift_spinbox.setValue(1)
         self.shift_label = QLabel("Shifts:")
+
         spinbox_layout = QHBoxLayout()
         spinbox_layout.addWidget(self.shift_label)
         spinbox_layout.addWidget(self.shift_spinbox)
         self.stem_layout.addLayout(spinbox_layout)
-        self.stem_layout.addWidget(self.shift_label)
-        self.stem_layout.addWidget(self.shift_spinbox)
+
         self.stem_layout.addWidget(self.stem_file_button)
         self.stem_layout.addWidget(self.split_button)
+
         self.model_checkboxes_layout = QHBoxLayout()
         self.model_checkboxes_group = []
         self.stem_layout.addLayout(self.model_checkboxes_layout)
-        self.side_by_side_layout.addLayout(self.stem_layout)
+        self.left_widget = QWidget()
+        self.left_widget.setLayout(self.horizontal_layout)
+
+        
+        self.right_widget = QWidget()
+        self.right_widget.setLayout(self.stem_layout)
+       
+        self.side_by_side_layout.addWidget(self.left_widget, 1)
+        self.side_by_side_layout.addWidget(self.vertical_divider)
+        self.side_by_side_layout.addWidget(self.right_widget, 1)
+
+        
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.progress_bar.setRange(0,0)
+        self.progress_bar.setRange(0, 0)
         self.progress_bar.hide()
-               
-        self.horizontal_layout.addWidget(self.download_button)
+
+        
         self.progress_layout = QVBoxLayout()
-        self.progress_layout.addLayout(self.side_by_side_layout)        
+        self.progress_layout.addLayout(self.side_by_side_layout)
         self.progress_layout.addWidget(self.progress_bar)
-        self.setLayout(self.progress_layout)
+        self.main_layout.addLayout(self.progress_layout, 1)
+        self.setLayout(self.main_layout)
+
+    def on_checkbox_state_changed(self):
+        selected_instruments = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
+        models = []
+        self.model_checkboxes_group = []
+        while self.model_checkboxes_layout.count():
+            item = self.model_checkboxes_layout.itemAt(0)
+            if item is not None:
+                widget = item.widget()
+                self.model_checkboxes_layout.removeWidget(widget)
+                widget.deleteLater()
+        if selected_instruments:
+            for inst in selected_instruments:
+                models.extend(self.instrument_dict[inst])
+            models = list(set(models))
+            if len(models) >= 1:
+                self.model_checkboxes_layout = QHBoxLayout()
+                for model in models:
+                    model_checkbox = QCheckBox(model)
+                    model_checkbox.setChecked(False)
+                    self.model_checkboxes_group.append(model_checkbox)
+                    self.model_checkboxes_layout.addWidget(model_checkbox)
+                self.stem_layout.addLayout(self.model_checkboxes_layout)
+
 
     
     def on_checkbox_state_changed(self):
@@ -211,7 +259,7 @@ class MainGUI(QWidget):
     def select_save_location(self):
         folder = QFileDialog.getExistingDirectory(self, "Select Download Folder")
         if folder:
-            self.save_path = f'\"{folder}\"'
+            self.save_path = folder
             self.save_label.setText(f"Save Location: {folder}")
 
   
@@ -226,7 +274,7 @@ class MainGUI(QWidget):
             return
         
               
-        self.download_thread = Downloader.DownloadThread(url, format_selected, quality_selected, self.save_path.replace("/", "\\"))
+        self.download_thread = Downloader.DownloadThread(url, format_selected, quality_selected, self.save_path)
         self.download_thread.finished_signal.connect(self.download_complete)   
         
         self.download_thread.start()
@@ -287,4 +335,6 @@ if __name__ == "__main__":
     app.setWindowIcon(QIcon('icon.ico'))
     window = MainGUI()
     window.show()
+    window.activateWindow()
+    window.raise_()
     sys.exit(app.exec())

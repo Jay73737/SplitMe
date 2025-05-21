@@ -3,14 +3,22 @@ from scipy.io import wavfile
 
 
 
-import demucs.separate
+# Save the original stdout
+
+import shutil
+
+import demucs.separate as separate
 
 import traceback
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, QObject
 import os
 
 
-class StemSplitter(QThread):
+
+
+
+
+class StemSplitter():#QThread):
     finished = pyqtSignal(str)
 
     def __init__(self,model, instruments, file_path, shifts=1, keep_all=False ):
@@ -19,43 +27,79 @@ class StemSplitter(QThread):
         self.model = model
         self.instruments = [inst.lower() for inst in instruments]
         self.file_path = file_path
+    
         self.paths = []
         self.shifts = shifts
         self.keep_all = keep_all
 
     def run(self):
-        self.split_stems()
+        self.split_stems(self.file_path)
     
 
-    def split_stems(self):
-        file_name = os.path.basename(self.file_path).split('.')[0]
-        dir = os.path.dirname(self.file_path)
-        base_output_dir = os.path.join(dir, f"{self.model[0]}_stems")
+    
 
-        os.makedirs(base_output_dir, exist_ok=True)
+        
+
+    def split_stems(self, file_path=None):
+        if file_path:
+            file_name = os.path.basename(file_path).split('.')[0]
+            dir = os.path.dirname(file_path)
+        if not os.path.isdir(dir):   
+            os.makedirs(dir, exist_ok=True)
+        # Run through each model
         for m in self.model:
-            model_output_dir = os.path.join(base_output_dir, m)
+            model_output_dir = dir
             os.makedirs(model_output_dir, exist_ok=True)
             try:
-                if len(self.instruments) == 1:
-                    demucs.separate.main(["-n", m, "-o", base_output_dir, self.file_path, '--shifts=' + str(self.shifts), '--two-stems=' + self.instruments[0]])
+                if len(self.instruments) == 1: # Can use the --two-stems flag
+                    separate.main(["-n", m, "-o", rf'{model_output_dir}', file_path, '--shifts=' + str(self.shifts), '--two-stems=' + self.instruments[0], '-r'])
                 else:
-                    demucs.separate.main(["-n", m, "-o", base_output_dir, self.file_path, '--shifts=' + str(self.shifts)])
-                # The separated files should be in base_output_dir/m/file_name/
-                target_dir = os.path.join(model_output_dir, file_name)
-                if os.path.exists(target_dir):
-                    split_files = os.listdir(target_dir)
-                    for file in split_files:
-                        keep = any(p in file for p in self.instruments)
-                        if keep:
-                            print(file)
-                        elif not self.keep_all:
-                            os.remove(os.path.join(target_dir, file))
-                            print(f"Removed {file} from {target_dir}")
-                    #self.finished.emit(target_dir)
+                    separate.main(["-n", m, "-o", rf'{model_output_dir}', file_path, '--shifts=' + str(self.shifts), '-r'])
+                    
+                    # Get the files in the output directory
+                    files = os.listdir(os.path.join(model_output_dir, file_name))
+                    rm_files = [] #so we only have the stems we wanted to be stored
+                    for file in files:
+                        for ins in self.instruments:
+                            if ins+'.wav' in rm_files:
+                                rm_files.remove(ins+'.wav')
+                                continue
+                            if ins in file:
+                                continue
+                            else:
+                                if file not in rm_files and file.split('.')[0] not in self.instruments:
+                                    rm_files.append(file) 
+                                
+                    for file in rm_files:
+                        if file in files:
+                            if os.path.isfile(os.path.join(model_output_dir, file_name, file)):
+                                os.remove(os.path.join(model_output_dir, file_name, file))
+                os.makedirs(os.path.join(model_output_dir,file_name, m), exist_ok=True)
+                files = os.listdir(os.path.join(model_output_dir, file_name))
+                
+                for file in files:
+                    if '[' not in file and os.path.isfile(os.path.join(model_output_dir, file_name, file)):
+                        shutil.move(os.path.join(model_output_dir, file_name, file), os.path.join(model_output_dir, file_name, m, file))
+                        continue
+                    temp_str = "["
+                    if '.wav' in file or '.mp3' in file:
+                        
+                        shutil.move(os.path.join(model_output_dir, file_name, file), os.path.join(model_output_dir, file_name, m, file))
+                        if '[' in file:
+                            os.rename(os.path.join(model_output_dir, file_name, m, file),
+                            os.path.join(model_output_dir, file_name, m, self.instruments[0] +'.' + file.split('.')[1]))
+                                
+                                
+                                
+                                    
+                    
+           
+                           
+              # self.finished.emit(model_output_dir)
             except Exception as e:
                 self.finished.emit(f"Error: {str(e)}")
                 traceback.print_exc()
+              # Reset stdout to original
 
     # Combines the outputs of the stems, not sure whether this helps or not, but keeping it for potential future use
     def combine_outputs(self, files, output_path):
@@ -66,7 +110,7 @@ class StemSplitter(QThread):
         for file in files:
             rate, data = wavfile.read(file)
             sample_rates.append(rate)
-            audio_data.append(data.astype(np.float32)) 
+            audio_data.append(data.astype(np.float32))
         if len(set(sample_rates)) != 1:
             raise ValueError("All audio files must have the same sample rate") 
         min_length = min([len(d) for d in audio_data])
@@ -77,3 +121,5 @@ class StemSplitter(QThread):
         wavfile.write(output_path, sample_rates[0], avg_audio)
 
 
+s = StemSplitter(model=['htdemucs','mdx'], instruments=['vocals', 'bass'], file_path=r'C:\Users\justm\Desktop\Code\New folder\The Beatles - Something.mp3', shifts=1, keep_all=False)
+s.run()
