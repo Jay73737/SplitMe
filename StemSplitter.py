@@ -18,7 +18,7 @@ import os
 
 
 
-class StemSplitter():#QThread):
+class StemSplitter(QThread):
     finished = pyqtSignal(str)
 
     def __init__(self,model, instruments, file_path, shifts=1, keep_all=False ):
@@ -95,7 +95,7 @@ class StemSplitter():#QThread):
                     
            
                            
-              # self.finished.emit(model_output_dir)
+                self.finished.emit(model_output_dir)
             except Exception as e:
                 self.finished.emit(f"Error: {str(e)}")
                 traceback.print_exc()
@@ -121,5 +121,3 @@ class StemSplitter():#QThread):
         wavfile.write(output_path, sample_rates[0], avg_audio)
 
 
-s = StemSplitter(model=['htdemucs','mdx'], instruments=['vocals', 'bass'], file_path=r'C:\Users\justm\Desktop\Code\New folder\The Beatles - Something.mp3', shifts=1, keep_all=False)
-s.run()
