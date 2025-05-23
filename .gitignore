@@ -7,3 +7,5 @@
 /ffprobe.exe
 /ffplay.exe
 /ffmpeg/
+/datasets/
+/test/
