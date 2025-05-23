@@ -2,9 +2,6 @@ import numpy as np
 from scipy.io import wavfile
 
 
-
-# Save the original stdout
-
 import shutil
 
 import demucs.separate as separate
@@ -35,7 +32,7 @@ class StemSplitter(QThread):
         if self.ext == 'mp4':
             ffmpeg.input(file_path).output(file_path.replace('.mp4', '.wav')).run(overwrite_output=True)
             self.ext = 'wav'
-        self.file_path = file_path.replace('.mp4', '.wav')  
+            self.file_path = file_path.replace('.mp4', '.wav')  
 
     def run(self):
         self.split_stems(self.file_path)
