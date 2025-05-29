@@ -4,12 +4,16 @@ os.environ["TORCHAUDIO_USE_BACKEND_DISPATCHER"] = "1"
 from PySide6.QtWidgets import (
     QApplication, QVBoxLayout, QLabel, QLineEdit, QPushButton,
     QFileDialog, QComboBox, QMessageBox, QProgressBar, 
-    QCheckBox, QWidget, QRadioButton,QButtonGroup,QHBoxLayout, QFrame, QSpinBox, QSizePolicy
+    QCheckBox, QWidget, QRadioButton,QButtonGroup,QHBoxLayout, QFrame, QSpinBox, QSizePolicy, QGroupBox, QSlider
 )
 from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
 import YoutubeDownloader, Downloader, StemSplitter
 from Results import ResultsWindow
+
+from GUIComponents import DraggableStemLabel
+
+
 
 
 
@@ -30,14 +34,14 @@ class MainGUI(QWidget):
         }
         
         self.filepath = ""
-
+        self.split_ind = 1
         self.setWindowTitle("Stem Splitter")
         self.setGeometry(200, 400, 600, 350)
         self.main_layout = QVBoxLayout()
         self.side_by_side_layout = QHBoxLayout()
         self.horizontal_layout = QVBoxLayout()
 
-        # --- Left Side (horizontal_layout) ---
+        
         
 
         self.platform_yt = QRadioButton("YouTube", self)
@@ -94,16 +98,20 @@ class MainGUI(QWidget):
         self.horizontal_layout.addWidget(self.save_label)
         self.horizontal_layout.addWidget(self.download_button)
 
-        # --- Divider ---
+        
         self.vertical_divider = QFrame()
         self.vertical_divider.setFrameShape(QFrame.Shape.VLine) 
         self.vertical_divider.setFrameShadow(QFrame.Shadow.Sunken)
 
-        # --- Right Side (stem_layout) ---
+        
         self.stem_layout = QVBoxLayout()
         self.split_stems_file = QLabel("Loaded File: ")
         self.stem_layout.addWidget(self.split_stems_file)
-
+        self.stems_group = QGroupBox("Stems")
+        self.stems_layout = QVBoxLayout()
+        self.stems_group.setVisible(False)
+        self.stems_group.setLayout(self.stems_layout)
+        self.stem_layout.addWidget(self.stems_group)
         self.split_button = QPushButton("Split Stems")
         self.split_button.clicked.connect(self.split_stems)
         self.stem_file_button = QPushButton("Select File")
@@ -163,13 +171,19 @@ class MainGUI(QWidget):
 
         
         self.progress_layout = QVBoxLayout()
+        self.split_progress_label = QLabel(f"Shift 1/{self.shift_spinbox.value()}")
+        self.split_progress_label.setVisible(False)
+        split_progress_layout = QHBoxLayout()
+        split_progress_layout.addWidget(self.split_progress_label)
+        split_progress_layout.addWidget(self.progress_bar)
         self.progress_layout.addLayout(self.side_by_side_layout)
         self.progress_layout.addWidget(self.progress_label)
         self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.progress_layout.addWidget(self.progress_bar)
+        self.progress_layout.addLayout(split_progress_layout)
         self.main_layout.addLayout(self.progress_layout, 1)
         self.percent_done = 0
         self.setLayout(self.main_layout)
+        self.current_shift = 1
 
     def on_checkbox_state_changed(self):
         
@@ -197,7 +211,7 @@ class MainGUI(QWidget):
                     self.model_checkboxes_group.append(model_checkbox)
                     self.model_checkboxes_layout.addWidget(model_checkbox)
 
-                self.model_checkboxes_group[0].setChecked(True)  # Check the first model by default
+                self.model_checkboxes_group[0].setChecked(True)
         self.models_label.setVisible(any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
         
 
@@ -319,29 +333,49 @@ class MainGUI(QWidget):
         self.splitter.quit()
         self.progress_bar.hide()
         self.progress_label.setText("Splitting complete!")
+        self.current_shift = 1
+        if self.filepath:
+            file_name = os.path.basename(self.filepath).split('.')[0]
+            
+            if self.model_checkboxes_group:
+                model = self.model_checkboxes_group[0].text()
+                stems_folder = os.path.join(os.path.dirname(self.filepath), f"{file_name}_{model}_stems")
+                self.update_stems_display(stems_folder)
 
     
     def update_progress(self, message, length):
         if '%' not in message:
             return
+        percentage = int(message.strip().split('%')[0])
+        if percentage == 100 and self.current_shift < self.shift_spinbox.value():
+            self.last_percent_reset()            
+            
+            
+            
+
         end_stats = message.rsplit('|')[2].split('<')[1].split(',')[0]
-        self.progress_label.setText("Time Remaining: " + end_stats)
+        self.progress_label.setText("Time Remaining: " + end_stats + " - Shift " + str(self.current_shift) + "/" + str(self.shift_spinbox.value()))
 
-        debg = (int(message.strip().split('%')[0]) - self.last_percent_done) / (length)
-        self.last_percent_done = self.percent_done + debg
-
-        self.percent_done += debg
-        self.progress_bar.setValue(int(self.percent_done))
+     
+        self.progress_bar.setValue(int(percentage))
         print(f"Progress: {self.percent_done}%    {end_stats}")
+
+        # Increment split count if a shift completes
+        if int(self.percent_done) // (100 // self.shift_spinbox.value()) + 1 > self.current_shift:
+            self.current_shift += 1
+            self.split_progress_label.setText(f"Split {self.current_shift}/{self.shift_spinbox.value()}")
 
     def last_percent_reset(self):
         self.last_percent_done = 0
         self.percent_done = 0
         self.progress_bar.setValue(0)
-        self.progress_label.setText("Splitting stems... Please wait.")
+        
         self.progress_bar.show()
+        self.current_shift += 1
+        self.split_progress_label.setText(f"Split {self.current_shift}/{self.shift_spinbox.value()}")
         
     def split_stems(self):
+        
         if not self.filepath:
             QMessageBox.warning(self, "Error", "Please select or download a file to split.")
             return
@@ -349,14 +383,15 @@ class MainGUI(QWidget):
             QMessageBox.warning(self, "Error", "Please select at least one model to split the stems.")
             return
         info = self.get_models()
-
+        self.shift_label.setVisible(True)
         self.splitter = StemSplitter.StemSplitter(info[0],info[1], self.filepath, shifts=self.shift_spinbox.value(), keep_all=False)
-        self.splitter.get_progress.connect(self.last_percent_reset)
+        
         self.splitter.finished.connect(self.split_complete)
         self.splitter.progress.connect(self.update_progress)
 
         self.splitter.start()
         self.progress_bar.show()
+        self.stems_group.setVisible(True)
        
 
     
@@ -364,17 +399,49 @@ class MainGUI(QWidget):
         if success:
             self.select_file_location(file_path)
             self.save_label.setText(f"Save Location: {file_path}")
-            print(file_path)
+            self.filepath = file_path
+            self.split_stems_file.setText(f"Loaded File: {file_path}")
             self.progress_bar.hide()
         else:
             self.progress_bar.hide()
         
+    def update_stems_display(self, stems_folder):
     
+        for i in reversed(range(self.stems_layout.count())):
+            widget = self.stems_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
         
+        if os.path.isdir(stems_folder):
+            for fname in os.listdir(stems_folder):
+                if fname.endswith('.wav'):
+                    file_path = os.path.join(stems_folder, fname)
+                    stem_box = DraggableStemLabel(fname, file_path)
+                    self.stems_layout.addWidget(stem_box)
+        else:
+            self.stems_layout.addWidget(QLabel("No stems found."))
+        
+    def update_progress_color(self, *args):
+        duration = self.player.duration()
+        position = self.player.position()
+        if duration > 0:
+            progress = position / duration
+        else:
+            progress = 0.0
+
+        # Interpolate from dark grey (#888888) to green (#50c878)
+        r_start, g_start, b_start = 136, 136, 136  # #888888
+        r_end, g_end, b_end = 80, 200, 120         # #50c878
+        r = int(r_start + (r_end - r_start) * progress)
+        g = int(g_start + (g_end - g_start) * progress)
+        b = int(b_start + (b_end - b_start) * progress)
+        color = f'#{r:02x}{g:02x}{b:02x}'
+        self.setStyleSheet(f"QFrame {{ border: 2px solid #888; border-radius: 6px; background: {color}; }}")
+
 
 
     
-# https://www.youtube.com/watch?v=1VQ_3sBZEm0
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon('icon.ico'))

@@ -28,10 +28,10 @@ class StemSplitterOutput(QObject):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
-            encoding="utf-8",  # <--- add this line
-            bufsize=1  # Line buffered
+            encoding="utf-8",  
+            bufsize=1 
         )
-        # Read output line by line
+        
         for line in self.process.stdout:
             if not self.running:
                 break
@@ -43,8 +43,7 @@ class StemSplitterOutput(QObject):
 
     def stop(self):
         self.running = False
-        self.quit()
-        self.wait()
+        
 
       
 
@@ -61,13 +60,8 @@ class StemSplitter(QThread):
         self.instruments = [inst.lower() for inst in instruments]
         self.file_path = file_path
         self.shifts = shifts
-        self.progress_length = 0
-        for m in self.model:
-            if m == "htdemucs_ft":
-                self.progress_length += 4 * self.shifts  # or whatever multiplier is correct
-            else:
-                self.progress_length += 1 * self.shifts
-        self.get_progress.emit(self.progress_length)
+        self.progress_length = len(self.model)
+        
 
         
         
@@ -98,7 +92,7 @@ class StemSplitter(QThread):
             dir = os.path.dirname(file_path)
         if not os.path.isdir(dir):
             os.makedirs(dir, exist_ok=True)
-        # Run through each model
+       
         
         self.splitter_output = None
         for m in self.model:
@@ -123,12 +117,12 @@ class StemSplitter(QThread):
                     self.splitter_output = StemSplitterOutput(process_args)
                     self.splitter_output.update.connect(self.update_progress)
                     self.splitter_output.run()
-                    # Get the files in the output directory
+                   
                 temp_directory = os.path.join(model_output_dir, m, file_name)
                 print(f"Temp directory: {temp_directory}")
                 files = os.listdir(temp_directory)
                 print(f"Files in temp directory: {files}")
-                rm_files = [] #so we only have the stems we wanted to be stored
+                
                 for file in files:
                     if len(self.instruments) == 1:
                         if file.endswith('.wav') and file.startswith(self.instruments[0]):

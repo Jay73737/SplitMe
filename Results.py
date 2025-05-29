@@ -31,7 +31,7 @@ class ResultsWindow(QDialog):
 
         for result in results:
             hbox = QHBoxLayout()
-            # Download thumbnail image
+            
             thumb_url = result.get('thumbnail')
             if thumb_url:
                 try:
