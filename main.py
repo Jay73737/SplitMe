@@ -1,16 +1,13 @@
 import sys
 import os
-import requests
-from bs4 import BeautifulSoup
-
-from PyQt6.QtWidgets import (
+os.environ["TORCHAUDIO_USE_BACKEND_DISPATCHER"] = "1"
+from PySide6.QtWidgets import (
     QApplication, QVBoxLayout, QLabel, QLineEdit, QPushButton,
     QFileDialog, QComboBox, QMessageBox, QProgressBar, 
     QCheckBox, QWidget, QRadioButton,QButtonGroup,QHBoxLayout, QFrame, QSpinBox, QSizePolicy
 )
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import Qt, pyqtSignal
-
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt
 import YoutubeDownloader, Downloader, StemSplitter
 from Results import ResultsWindow
 
@@ -32,6 +29,8 @@ class MainGUI(QWidget):
             "Other": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
         }
         
+        self.filepath = ""
+
         self.setWindowTitle("Stem Splitter")
         self.setGeometry(200, 400, 600, 350)
         self.main_layout = QVBoxLayout()
@@ -39,9 +38,7 @@ class MainGUI(QWidget):
         self.horizontal_layout = QVBoxLayout()
 
         # --- Left Side (horizontal_layout) ---
-        self.search_button = QPushButton("Search")
-        self.search_button.clicked.connect(self.search_youtube)
-        self.horizontal_layout.addWidget(self.search_button)
+        
 
         self.platform_yt = QRadioButton("YouTube", self)
         self.platform_yt.setChecked(True)
@@ -61,21 +58,27 @@ class MainGUI(QWidget):
         self.horizontal_layout.addLayout(self.link_layout, stretch=1)
 
         self.url_input.returnPressed.connect(self.search_youtube)
-        
+        self.search_button = QPushButton("Search")
+        self.search_button.clicked.connect(self.search_youtube)
+        self.horizontal_layout.addWidget(self.search_button)
         self.format_label = QLabel("Select Format:")
         self.horizontal_layout.addWidget(self.format_label)
-
+        self.quality_dropdown = QComboBox(self)
+        self.quality_dropdown.addItems(["Low (64kbps)", "Medium (128kbps)", "High (192kbps)"])
+        self.quality_dropdown.setDisabled(True)
         self.format_dropdown = QComboBox(self)
         self.format_dropdown.addItems([
             "Video - mp4", "Audio - mp3", "Audio - wav", "Audio - m4a",
             "Audio - aac", "Audio - flac", "Audio - opus"
         ])
+        self.format_dropdown.currentTextChanged.connect(lambda: self.quality_dropdown.setDisabled('Audio - mp3' not in self.format_dropdown.currentText()))
         self.horizontal_layout.addWidget(self.format_dropdown)
-
+        
         self.quality_label = QLabel("Select Audio Quality:")
         self.horizontal_layout.addWidget(self.quality_label)
-        self.quality_dropdown = QComboBox(self)
-        self.quality_dropdown.addItems(["Low (64kbps)", "Medium (128kbps)", "High (192kbps)"])
+        
+        
+        
         self.horizontal_layout.addWidget(self.quality_dropdown)
 
         self.save_button = QPushButton("Select Save Location")
@@ -120,19 +123,27 @@ class MainGUI(QWidget):
         self.shift_spinbox = QSpinBox(self)
         self.shift_spinbox.setRange(1, 20)
         self.shift_spinbox.setValue(1)
+        self.shift_spinbox.setToolTip("This will run the model multiple times with a random .5 second shift. \nThis will multiply the splitting time by this number.")
         self.shift_label = QLabel("Shifts:")
+        self.shift_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.shift_label.setToolTip("This will run the model multiple times with a random .5 second shift. \nThis will multiply the splitting time by this number.")
 
         spinbox_layout = QHBoxLayout()
         spinbox_layout.addWidget(self.shift_label)
         spinbox_layout.addWidget(self.shift_spinbox)
         self.stem_layout.addLayout(spinbox_layout)
-
-        self.stem_layout.addWidget(self.stem_file_button)
-        self.stem_layout.addWidget(self.split_button)
-
+        self.models_label = QLabel("Select Models:")
+        self.models_label.setVisible(False)
+        self.stem_layout.addWidget(self.models_label)
         self.model_checkboxes_layout = QHBoxLayout()
         self.model_checkboxes_group = []
         self.stem_layout.addLayout(self.model_checkboxes_layout)
+        self.stem_layout.addWidget(self.stem_file_button)
+        self.split_button.setEnabled(False)
+        self.stem_layout.addWidget(self.split_button)
+
+        
+        
         self.left_widget = QWidget()
         self.left_widget.setLayout(self.horizontal_layout)
 
@@ -143,21 +154,26 @@ class MainGUI(QWidget):
         self.side_by_side_layout.addWidget(self.left_widget, 1)
         self.side_by_side_layout.addWidget(self.vertical_divider)
         self.side_by_side_layout.addWidget(self.right_widget, 1)
-
-        
+        self.last_percent_done = 0
+        self.progress_label = QLabel("")
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.progress_bar.setRange(0, 0)
+        self.progress_bar.setRange(0, 100)
         self.progress_bar.hide()
 
         
         self.progress_layout = QVBoxLayout()
         self.progress_layout.addLayout(self.side_by_side_layout)
+        self.progress_layout.addWidget(self.progress_label)
+        self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.progress_layout.addWidget(self.progress_bar)
         self.main_layout.addLayout(self.progress_layout, 1)
+        self.percent_done = 0
         self.setLayout(self.main_layout)
 
     def on_checkbox_state_changed(self):
+        
+        self.split_button.setEnabled(self.filepath != "" and any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
         selected_instruments = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
         models = []
         self.model_checkboxes_group = []
@@ -169,41 +185,25 @@ class MainGUI(QWidget):
                 widget.deleteLater()
         if selected_instruments:
             for inst in selected_instruments:
-                models.extend(self.instrument_dict[inst])
-            models = list(set(models))
+                models.append(set(self.instrument_dict[inst]))
+
+            models = list(sorted(set.intersection(*models)))
+            
             if len(models) >= 1:
-                self.model_checkboxes_layout = QHBoxLayout()
+                
                 for model in models:
                     model_checkbox = QCheckBox(model)
                     model_checkbox.setChecked(False)
                     self.model_checkboxes_group.append(model_checkbox)
                     self.model_checkboxes_layout.addWidget(model_checkbox)
-                self.stem_layout.addLayout(self.model_checkboxes_layout)
+
+                self.model_checkboxes_group[0].setChecked(True)  # Check the first model by default
+        self.models_label.setVisible(any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
+        
 
 
     
-    def on_checkbox_state_changed(self):
-        selected_instruments = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
-        models = []
-        self.model_checkboxes_group = []
-        while self.model_checkboxes_layout.count():
-            item = self.model_checkboxes_layout.itemAt(0)
-            if item is not None:
-                widget = item.widget()
-                self.model_checkboxes_layout.removeWidget(widget)
-                widget.deleteLater()
-        if selected_instruments:
-            for inst in selected_instruments:
-                models.extend(self.instrument_dict[inst])
-            models = list(set(models))
-            if len(models) >= 1:
-                self.model_checkboxes_layout = QHBoxLayout()
-                for model in models:
-                    model_checkbox = QCheckBox(model)
-                    model_checkbox.setChecked(False)
-                    self.model_checkboxes_group.append(model_checkbox)
-                    self.model_checkboxes_layout.addWidget(model_checkbox)
-                self.stem_layout.addLayout(self.model_checkboxes_layout)
+    
         
 
     def set_url(self, input_dict):
@@ -268,6 +268,8 @@ class MainGUI(QWidget):
         if file:
             self.filepath = file
             self.split_stems_file.setText(f"Loaded File: {file}")
+        
+        self.split_button.setEnabled(self.filepath != "" and any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
        
 
 
@@ -295,7 +297,7 @@ class MainGUI(QWidget):
         self.download_thread.start()
 
     
-
+     
     
     def get_models(self):
 
@@ -309,22 +311,50 @@ class MainGUI(QWidget):
             return
         return (selected_models, stem_types)
         
-        
-            
+    def update_progress_bar(self, value):
+            self.progress_bar.setValue(value)
 
     def split_complete(self, message):
         print(message)
         self.splitter.quit()
         self.progress_bar.hide()
-        os.startfile(message)
+        self.progress_label.setText("Splitting complete!")
 
+    
+    def update_progress(self, message, length):
+        if '%' not in message:
+            return
+        end_stats = message.rsplit('|')[2].split('<')[1].split(',')[0]
+        self.progress_label.setText("Time Remaining: " + end_stats)
+
+        debg = (int(message.strip().split('%')[0]) - self.last_percent_done) / (length)
+        self.last_percent_done = self.percent_done + debg
+
+        self.percent_done += debg
+        self.progress_bar.setValue(int(self.percent_done))
+        print(f"Progress: {self.percent_done}%    {end_stats}")
+
+    def last_percent_reset(self):
+        self.last_percent_done = 0
+        self.percent_done = 0
+        self.progress_bar.setValue(0)
+        self.progress_label.setText("Splitting stems... Please wait.")
+        self.progress_bar.show()
+        
     def split_stems(self):
         if not self.filepath:
             QMessageBox.warning(self, "Error", "Please select or download a file to split.")
             return
+        if not self.model_checkboxes_group:
+            QMessageBox.warning(self, "Error", "Please select at least one model to split the stems.")
+            return
         info = self.get_models()
+
         self.splitter = StemSplitter.StemSplitter(info[0],info[1], self.filepath, shifts=self.shift_spinbox.value(), keep_all=False)
+        self.splitter.get_progress.connect(self.last_percent_reset)
         self.splitter.finished.connect(self.split_complete)
+        self.splitter.progress.connect(self.update_progress)
+
         self.splitter.start()
         self.progress_bar.show()
        

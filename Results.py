@@ -1,10 +1,10 @@
-from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt, pyqtSignal
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt, Signal
 import requests
 import traceback
 class ClickableLabel(QLabel):
-    clicked = pyqtSignal(str) 
+    clicked = Signal(str) 
 
     def __init__(self, text, url, pixmap=None, parent=None):
         super().__init__(text, parent)
@@ -17,7 +17,7 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 class ResultsWindow(QDialog):
-    finished = pyqtSignal(str)
+    finished = Signal(str)
 
     def __init__(self, results, parent=None):
         super().__init__(parent)

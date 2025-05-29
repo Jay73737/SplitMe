@@ -1,9 +1,9 @@
-from PyQt6.QtCore import QThread, pyqtSignal
+from PySide6.QtCore import QThread, Signal
 import yt_dlp
 import os
 class DownloadThread(QThread):
-    progress_signal = pyqtSignal(int) 
-    finished_signal = pyqtSignal(bool, str, str) 
+    progress_signal = Signal(int) 
+    finished_signal = Signal(bool, str, str) 
 
 
     def __init__(self, url, format_selected, quality_selected, save_path):

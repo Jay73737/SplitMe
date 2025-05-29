@@ -1,15 +1,14 @@
-
-from PyQt6.QtCore import QThread, pyqtSignal, pyqtSlot
+from PySide6.QtCore import QThread, Signal
 from googleapiclient.discovery import build
-from typing import Union
+
 import json
 import os
 import traceback
 YOUTUBE_API_SERVICE_NAME = 'youtube'
 YOUTUBE_API_VERSION = 'v3'
 class YoutubeDownloader(QThread):
-    finished = pyqtSignal(list)
-    error = pyqtSignal( str)
+    finished = Signal(list)
+    error = Signal( str)
     def __init__(self, url, soundcloud=False):
         super().__init__()
         self.url = url
@@ -53,6 +52,6 @@ class YoutubeDownloader(QThread):
                 
                 self.error.emit(traceback.format_exc() + f"\n\nError: {str(item)}")
         return results
-           
+
 
 
