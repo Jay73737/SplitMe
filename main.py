@@ -1,21 +1,26 @@
 import sys
 import os
 os.environ["TORCHAUDIO_USE_BACKEND_DISPATCHER"] = "1"
-from PySide6.QtWidgets import (
+if getattr(sys, 'frozen', False):
+    # we are running in a bundle
+    frozen = 'ever so'
+    bundle_dir = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
+from PyQt6.QtWidgets import (
     QApplication, QVBoxLayout, QLabel, QLineEdit, QPushButton,
     QFileDialog, QComboBox, QMessageBox, QProgressBar, 
-    QCheckBox, QWidget, QRadioButton,QButtonGroup,QHBoxLayout, QFrame, QSpinBox, QSizePolicy, QGroupBox, QSlider
+    QCheckBox, QWidget, QRadioButton,QButtonGroup,QHBoxLayout, QFrame,
+      QSpinBox, QSizePolicy, QGroupBox
 )
-from PySide6.QtGui import QIcon
-from PySide6.QtCore import Qt, QUrl
-import YoutubeDownloader, Downloader, StemSplitter
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QUrl
+import YoutubeDownloader, Downloader
+from StemSplitter import StemSplitter, UpdaterWorker
 from Results import ResultsWindow
 
 from GUIComponents import DraggableStemLabel
-
-
-
-
 
 
 class MainGUI(QWidget):  
@@ -91,12 +96,17 @@ class MainGUI(QWidget):
 
         self.download_button = QPushButton("Download")
         self.download_button.clicked.connect(self.download_video)
-        self.save_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SplitMe')
+        self.save_path = os.path.abspath('SplitMe')
         self.save_label = QLabel(
-            f"Save Location: {os.path.join(os.path.dirname(os.path.realpath(__file__)), 'SplitMe')} "
+            f"Save Location: {self.save_path} "
         )
         self.horizontal_layout.addWidget(self.save_label)
         self.horizontal_layout.addWidget(self.download_button)
+        
+        # Add DraggableStemLabel for downloaded song
+        self.downloaded_song_box = DraggableStemLabel("None", None)
+        self.downloaded_song_box.setVisible(False)
+        self.horizontal_layout.addWidget(self.downloaded_song_box)
 
         
         self.vertical_divider = QFrame()
@@ -149,22 +159,23 @@ class MainGUI(QWidget):
         self.stem_layout.addWidget(self.stem_file_button)
         self.split_button.setEnabled(False)
         self.stem_layout.addWidget(self.split_button)
+        
 
-        
-        
         self.left_widget = QWidget()
+        self.left_widget.setFixedWidth(400)
         self.left_widget.setLayout(self.horizontal_layout)
-
+        
         
         self.right_widget = QWidget()
         self.right_widget.setLayout(self.stem_layout)
        
-        self.side_by_side_layout.addWidget(self.left_widget, 1)
+        self.side_by_side_layout.addWidget(self.left_widget, 0)
         self.side_by_side_layout.addWidget(self.vertical_divider)
         self.side_by_side_layout.addWidget(self.right_widget, 1)
         self.last_percent_done = 0
         self.progress_label = QLabel("")
         self.progress_bar = QProgressBar(self)
+        self.progress_bar.setTextVisible(False)
         self.progress_bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.progress_bar.setRange(0, 100)
         self.progress_bar.hide()
@@ -307,7 +318,7 @@ class MainGUI(QWidget):
               
         self.download_thread = Downloader.DownloadThread(url, format_selected, quality_selected, self.save_path)
         self.download_thread.finished_signal.connect(self.download_complete)   
-        
+        self.download_thread.progress_signal.connect(self.update_progress_bar)
         self.download_thread.start()
 
     
@@ -326,14 +337,19 @@ class MainGUI(QWidget):
         return (selected_models, stem_types)
         
     def update_progress_bar(self, value):
+            self.progress_label.setText(f"Downloading... {value}%")
             self.progress_bar.setValue(value)
 
     def split_complete(self, message):
         print(message)
-        self.splitter.quit()
-        self.progress_bar.hide()
+        
+        
+        
         self.progress_label.setText("Splitting complete!")
+        self.progress_bar.hide()
         self.current_shift = 1
+        self.update_worker.quit()
+        self.splitter.quit()
         if self.filepath:
             file_name = os.path.basename(self.filepath).split('.')[0]
             
@@ -343,22 +359,25 @@ class MainGUI(QWidget):
                 self.update_stems_display(stems_folder)
 
     
-    def update_progress(self, message, length):
+    def update_progress(self, message):
         if '%' not in message:
             return
-        percentage = int(message.strip().split('%')[0])
+        print(f"Received message: {message}")
+        models_multiplier = len(self.get_models()) * self.shift_spinbox.value()
+        if 'htdemucs_ft' in self.get_models():
+            models_multiplier -= self.shift_spinbox.value()
+            models_multiplier += 4 * self.shift_spinbox.value()
+
+        percentage = int(message.strip().split('%')[0]) / models_multiplier
         if percentage == 100 and self.current_shift < self.shift_spinbox.value():
-            self.last_percent_reset()            
-            
-            
-            
+            self.last_percent_reset()
+
+
 
         end_stats = message.rsplit('|')[2].split('<')[1].split(',')[0]
-        self.progress_label.setText("Time Remaining: " + end_stats + " - Shift " + str(self.current_shift) + "/" + str(self.shift_spinbox.value()))
+        self.progress_label.setText(f"{str(percentage)}% || Time Remaining: {end_stats} - Shift {self.current_shift}/{self.shift_spinbox.value()}")
 
-     
         self.progress_bar.setValue(int(percentage))
-        print(f"Progress: {self.percent_done}%    {end_stats}")
 
         # Increment split count if a shift completes
         if int(self.percent_done) // (100 // self.shift_spinbox.value()) + 1 > self.current_shift:
@@ -384,19 +403,26 @@ class MainGUI(QWidget):
             return
         info = self.get_models()
         self.shift_label.setVisible(True)
-        self.splitter = StemSplitter.StemSplitter(info[0],info[1], self.filepath, shifts=self.shift_spinbox.value(), keep_all=False)
+        self.splitter = StemSplitter(info[0],info[1], self.filepath, shifts=self.shift_spinbox.value(), keep_all=False)
         
         self.splitter.finished.connect(self.split_complete)
-        self.splitter.progress.connect(self.update_progress)
-
         self.splitter.start()
+
+        self.update_worker = UpdaterWorker("demucs_output.log")
+        self.update_worker.update_signal.connect(self.update_progress)
+        self.update_worker.start()
+        
         self.progress_bar.show()
         self.stems_group.setVisible(True)
+
        
 
     
     def download_complete(self, success, message, file_path):
         if success:
+            self.downloaded_song_box.reset(os.path.basename(file_path))
+            self.downloaded_song_box.file_path = file_path
+            self.downloaded_song_box.setVisible(True)
             self.select_file_location(file_path)
             self.save_label.setText(f"Save Location: {file_path}")
             self.filepath = file_path
@@ -420,27 +446,12 @@ class MainGUI(QWidget):
                     self.stems_layout.addWidget(stem_box)
         else:
             self.stems_layout.addWidget(QLabel("No stems found."))
-        
-    def update_progress_color(self, *args):
-        duration = self.player.duration()
-        position = self.player.position()
-        if duration > 0:
-            progress = position / duration
-        else:
-            progress = 0.0
 
-        # Interpolate from dark grey (#888888) to green (#50c878)
-        r_start, g_start, b_start = 136, 136, 136  # #888888
-        r_end, g_end, b_end = 80, 200, 120         # #50c878
-        r = int(r_start + (r_end - r_start) * progress)
-        g = int(g_start + (g_end - g_start) * progress)
-        b = int(b_start + (b_end - b_start) * progress)
-        color = f'#{r:02x}{g:02x}{b:02x}'
-        self.setStyleSheet(f"QFrame {{ border: 2px solid #888; border-radius: 6px; background: {color}; }}")
+    def resource_path(relative_path):
+        if hasattr(sys, '_MEIPASS'):
+            return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(os.path.abspath("."), relative_path)
 
-
-
-    
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

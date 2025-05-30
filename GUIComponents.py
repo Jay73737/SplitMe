@@ -1,7 +1,7 @@
-from PySide6.QtCore import Qt, QUrl, QMimeData
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtGui import QDrag, QPalette
-from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QSlider, QHBoxLayout, QVBoxLayout, QApplication
+from PyQt6.QtCore import Qt, QUrl, QMimeData
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtGui import QDrag, QPalette
+from PyQt6.QtWidgets import QFrame, QLabel, QPushButton, QSlider, QHBoxLayout, QVBoxLayout, QApplication
 
 class DraggableStemLabel(QFrame):
     
@@ -88,8 +88,23 @@ class DraggableStemLabel(QFrame):
         self.player.positionChanged.connect(self.update_position_slider)
         self.player.durationChanged.connect(self.update_duration)
 
+    def set_text(self, text):
+        self.label.setText(text)
+        self.setToolTip(text)
+
     def set_volume(self, value):
         self.audio_output.setVolume(value / 100)
+
+    def reset(self, file_path):
+        self.file_path = file_path
+        self.player.setSource(QUrl.fromLocalFile(self.file_path))
+        self.time_label.setText(f"00:00 / {self.format_time(self.player.duration())}")
+        self.position_slider.setValue(0)
+        self.position_slider.setEnabled(False)
+        self.play_button.setText("▶")
+        self.play_button.setToolTip("Play this stem")
+        self.setToolTip(file_path)
+        self.label.setText(file_path.split('/')[-1])
 
     def toggle_play_pause(self):
         
@@ -146,7 +161,7 @@ class DraggableStemLabel(QFrame):
         return f"{minutes:02}:{seconds:02}"
 
     def enterEvent(self, event):
-        self.setStyleSheet("QFrame { border: 2px solid #0078d7; background: #e6f2ff; }")
+        self.setStyleSheet("QFrame { border: 2px solid #0078d7; background: #444444; }")
         super().enterEvent(event)
 
     def leaveEvent(self, event):

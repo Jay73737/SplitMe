@@ -1,10 +1,10 @@
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
-from PySide6.QtGui import QPixmap
-from PySide6.QtCore import Qt, Signal
+from PyQt6.QtWidgets import QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QWidget
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtCore import Qt, pyqtSignal
 import requests
 import traceback
 class ClickableLabel(QLabel):
-    clicked = Signal(str) 
+    clicked = pyqtSignal(str) 
 
     def __init__(self, text, url, pixmap=None, parent=None):
         super().__init__(text, parent)
@@ -17,13 +17,13 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 class ResultsWindow(QDialog):
-    finished = Signal(str)
+    finished = pyqtSignal(str)
 
     def __init__(self, results, parent=None):
         super().__init__(parent)
         self.setWindowTitle("YouTube Search Results")
         layout = QVBoxLayout(self)
-
+ 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)
         content = QWidget()

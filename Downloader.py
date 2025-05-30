@@ -1,9 +1,21 @@
-from PySide6.QtCore import QThread, Signal
+from PyQt6.QtCore import QThread, pyqtSignal
 import yt_dlp
 import os
+import sys
+if getattr(sys, 'frozen', False):
+    # we are running in a bundle
+    frozen = 'ever so'
+    bundle_dir = sys._MEIPASS
+else:
+    # we are running in a normal Python environment
+    bundle_dir = os.path.dirname(os.path.abspath(__file__))
+
+
+
+
 class DownloadThread(QThread):
-    progress_signal = Signal(int) 
-    finished_signal = Signal(bool, str, str) 
+    progress_signal = pyqtSignal(int) 
+    finished_signal = pyqtSignal(bool, str, str) 
 
 
     def __init__(self, url, format_selected, quality_selected, save_path):
@@ -14,7 +26,7 @@ class DownloadThread(QThread):
         self.save_path = save_path
         self.service = None  
         self.downloaded_filename = ""
-        self.ffmpeg_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg\\ffmpeg.exe')
+        self.ffmpeg_path = os.path.join(bundle_dir,'ffmpeg')
         os.environ["PATH"] += os.pathsep + self.ffmpeg_path
 
     def run(self):
@@ -32,7 +44,7 @@ class DownloadThread(QThread):
 
         quality_map = {"Low (64kbps)": "64", "Medium (128kbps)": "128", "High (192kbps)": "192"}
         bitrate = quality_map.get(self.quality_selected, "192")
-        ffmpeg_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ffmpeg')
+        ffmpeg_dir = self.ffmpeg_path
         
         ydl_opts = {
             'ffmpeg_location': f'{ffmpeg_dir}',
