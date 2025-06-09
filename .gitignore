@@ -9,3 +9,8 @@
 /ffmpeg/
 /datasets/
 /test/
+.venv/
+.DS_Store
+*.swp
+__pycache__/
+*.py[cod]
