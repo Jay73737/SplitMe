@@ -164,6 +164,7 @@ class MainWindow(QWidget):
         st.setContentsMargins(30, 0, 30, 0)
 
         self.search = QLineEdit()
+        self.search.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.search.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.search.setStyleSheet("background:transparent;color:white;font:22px;border:0;")
         self.search.installEventFilter(self)
@@ -190,13 +191,25 @@ class MainWindow(QWidget):
 # This part is where we fucking get the window to be draggable no matter where tf you decide to click on it 
     def mousePressEvent(self, e):
         if e.button() == Qt.MouseButton.LeftButton:
-            self.drag_offset = e.globalPosition().toPoint() - self.frameGeometry().topLeft()
-            e.accept()
+            local = self.mapFromGlobal(e.globalPosition().toPoint())
+            if self.search.geometry().contains(local):
+                self.search.setFocus()
+                self._dragging = False
+                e.ignore()
+            else:
+                
+                self._dragging = True
+                self.drag_offset = e.globalPosition().toPoint() - self.frameGeometry().topLeft()
+                e.accept()
 
     def mouseMoveEvent(self, e):
-        if e.buttons() & Qt.MouseButton.LeftButton:
+        if self._dragging and (e.buttons() & Qt.MouseButton.LeftButton):
             self.move(e.globalPosition().toPoint() - self.drag_offset)
             e.accept()
+
+    def mouseReleaseEvent(self, e):
+        self._dragging = False          
+        super().mouseReleaseEvent(e)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
