@@ -190,11 +190,7 @@ class MainGUI(QWidget):
         
         
         
-        self.platform_yt = QCheckBox("Use YouTube API?", self)
-        self.platform_yt.setChecked(True)        
-        self.platform_yt.setToolTip("Use YouTube API to search for videos. \nIf unchecked, you can paste a direct URL.") 
-        
-        
+             
         self.platform_yt = QCheckBox("Use YouTube API?", self)
         self.platform_yt.setChecked(True)        
         self.platform_yt.setToolTip("Use YouTube API to search for videos. \nIf unchecked, you can paste a direct URL.") 
@@ -246,18 +242,7 @@ class MainGUI(QWidget):
         self.horizontal_layout.addWidget(self.save_button)        
         self.horizontal_layout.addWidget(self.save_label)
         self.horizontal_layout.addWidget(self.download_button)
-        
-        self.horizontal_layout.addWidget(self.platform_yt)   
-        self.horizontal_layout.addWidget(self.url_label)
-        self.horizontal_layout.addWidget(self.url_input)
-        self.horizontal_layout.addLayout(self.link_layout, stretch=1)              
-        self.horizontal_layout.addWidget(self.format_label)        
-        self.horizontal_layout.addWidget(self.format_dropdown)
-        self.horizontal_layout.addWidget(self.quality_label)
-        self.horizontal_layout.addWidget(self.quality_dropdown)        
-        self.horizontal_layout.addWidget(self.save_button)        
-        self.horizontal_layout.addWidget(self.save_label)
-        self.horizontal_layout.addWidget(self.download_button)
+
         self.horizontal_layout.addWidget(self.downloaded_song_box)
         
         
@@ -315,21 +300,15 @@ class MainGUI(QWidget):
             self.gpu_checkbox.setChecked(True)
             self.gpu_checkbox.clicked.connect(self.check_cuda_devices)
             self.gpu_checkbox.setToolTip("Dramatically reduces split time, but uses a lot of GPU resources.")
-        cuda = False
-        
-        if torch.cuda.is_available():
-            cuda = True
-            self.gpu_checkbox = QCheckBox(f"Use GPU {torch.cuda.get_device_name(0)}", self)
-            self.gpu_checkbox.setChecked(True)
-            self.gpu_checkbox.clicked.connect(self.check_cuda_devices)
-            self.gpu_checkbox.setToolTip("Dramatically reduces split time, but uses a lot of GPU resources.")
+      
+
         spinbox_layout = QHBoxLayout()
         spinbox_layout.addWidget(self.shift_label)
         spinbox_layout.addWidget(self.shift_spinbox)
         self.stem_layout.addLayout(spinbox_layout)
         self.models_label = QLabel("Select Models:")
         self.models_label.setVisible(False)
-        self.stem_layout.addWidget(self.models_label)
+        self.stem_layout 
         self.model_checkboxes_layout = QHBoxLayout()
         self.model_checkboxes_group = []
         self.stem_layout.addLayout(self.model_checkboxes_layout)
@@ -337,8 +316,7 @@ class MainGUI(QWidget):
         if cuda:
             self.stem_layout.addWidget(self.gpu_checkbox)
     
-        if cuda:
-            self.stem_layout.addWidget(self.gpu_checkbox)
+       
         self.stem_layout.addWidget(self.stem_file_button)
         self.split_button.setEnabled(False)
         self.stem_layout.addWidget(self.split_button)
@@ -379,7 +357,7 @@ class MainGUI(QWidget):
         split_progress_layout.addWidget(self.progress_bar)
         
         
-        split_progress_layout.addWidget(self.progress_bar)
+       
         
         
         self.progress_layout.addWidget(self.progress_label)
