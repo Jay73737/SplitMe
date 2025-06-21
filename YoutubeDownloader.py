@@ -1,16 +1,18 @@
 from PyQt6.QtCore import QThread, pyqtSignal
 from googleapiclient.discovery import build
 import sys
+from pathlib import Path
 import json
 import os
 import traceback
+from contextvars import ContextVar
 YOUTUBE_API_SERVICE_NAME = 'youtube'
 YOUTUBE_API_VERSION = 'v3'
+_ffmpeg_location = ContextVar('ffmpeg_location', default=None)
 
-def resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath("."), relative_path)
+
+_ffmpeg_location.set('ffmpeg')
+
 
 class YoutubeDownloader(QThread):
     finished = pyqtSignal(list)
@@ -18,11 +20,11 @@ class YoutubeDownloader(QThread):
     def __init__(self, url, soundcloud=False):
         super().__init__()
         self.url = url
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = resource_path('config.json')
-        with open(file_path, 'r') as f:
+        
+        file_path = Path(__file__).parent / 'config.json'
+        with open(file_path, 'r+') as f:
             parser = json.load(f)
-            api_key = parser['api_key']
+            api_key = parser['user']['api_key']
             
             self.youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=api_key)
             del api_key
@@ -35,6 +37,7 @@ class YoutubeDownloader(QThread):
     def search_youtube(self):
         response = self.youtube.search().list(q=self.url,part='id,snippet',maxResults=10).execute()
         results = []
+        returns = []
         items = response['items']
         for item in items:
             try:
@@ -54,10 +57,12 @@ class YoutubeDownloader(QThread):
                 
                 description = item['snippet']['description']
                 results.append({'title': title, 'url': url, 'description': description, 'thumbnail': item['snippet']['thumbnails']['default']['url']})
+                returns.append((self.url, results[-1]))
+
             except KeyError:
                 
                 self.error.emit(traceback.format_exc() + f"\n\nError: {str(item)}")
-        return results
+        return returns
 
 
 

@@ -1,26 +1,21 @@
-import sys
+
 import os
+from demucs.demucs.apply import get_progress
+from demucs.demucs.api import Separator, save_audio
 
-
-
-# Set environment variables for ffmpeg-python
-
-import subprocess
 import numpy as np
 from scipy.io import wavfile
-import shutil
-import traceback
-from PyQt6.QtCore import QThread, pyqtSignal, QObject
+from PyQt6.QtCore import QThread, pyqtSignal,  pyqtSlot, QTimer
 import ffmpeg
-import sys
+from pathlib import Path
 import time
+import sys
 
-ffmpeg_dir = os.path.realpath(os.path.join(os.path.dirname(__file__), 'ffmpeg'))
-os.environ["PATH"] += os.pathsep + ffmpeg_dir
+sys.path.append("C:/Users/justm/Desktop/Code/ytdownloader/src/SplitMe_Jay73737/demucs")
 
 class UpdaterWorker(QThread):
     update_signal = pyqtSignal(str)
-
+    finished_signal = pyqtSignal()
     def __init__(self, file_path):
 
         super().__init__()
@@ -29,176 +24,138 @@ class UpdaterWorker(QThread):
 
     def run(self):
         self.running = True
-        with open(self.file_path, 'r', encoding='utf-8') as file:
-            while self.running:
+        
+        while self.running:
+            with open(self.file_path, 'a+', encoding='utf-8') as file:
+            
                 line = file.readline()
                 if line:
                     self.update_signal.emit(line)
                 
-                time.sleep(0.1)
+            time.sleep(0.3)
+
+    @pyqtSlot()
+    def is_finished(self):
+        self.finished_signal.emit()
+        self.stop()
 
     def stop(self):
         self.running = False
         self.quit()
 
 
-class StemSplitterOutput(QObject):
-    finished = pyqtSignal()
-    def __init__(self, process_args ):
-        super().__init__()
-        self.process_args = process_args
-        self.running = True
-        self.creationflags = 0
-        
 
-    def run(self):
-
-        self.running = True
-        # Copy current environment and prepend ffmpeg folder to PATH
-       
-        print(self.process_args)
-        os.environ["PATH"] += os.pathsep + ffmpeg_dir 
-        with open("demucs_output.log", "w+", encoding="utf-8") as logfile:
-            self.process = subprocess.Popen(
-                self.process_args,
-                stdout=logfile,  # <--- FIXED: Now you can read from self.process.stdout
-                stderr=logfile,
-                text=True,
-                encoding="utf-8",
-                bufsize=1,
-            )
-            self.process.wait()
+            
            
 
 
 class StemSplitter(QThread):
-    finished = pyqtSignal(str)
+    finished = pyqtSignal(Path)
     progress = pyqtSignal(str, int)
-    get_progress = pyqtSignal(int)
+    get_args = pyqtSignal(list)
+
     def __init__(self,model, instruments, file_path, shifts=1, keep_all=False ):
         super().__init__()
+        sys.path.insert(0, Path(__file__).parent)
+        self.sources_list = ['guitar', 'bass', 'drums', 'vocals', 'other']
         self.stem = None
-        self.model = model
-        self.instruments = [inst.lower() for inst in instruments]
-        self.file_path = file_path.replace("\\", "/")
-
         self.shifts = shifts
-        self.progress_length = len(self.model)
-        
-        self.two_stems = len(self.instruments) == 1 and self.instruments[0] in ['vocals', 'drums', 'bass', 'other', 'guitar', 'piano']
-
-        self.paths = []
+        self.models = [Separator(m, shifts = shifts, progress=True) for m in model]
+        self.model_names = model
+        print(f'Instruments: {sorted(instruments)}')
+        self.instruments = [inst.lower() for inst in sorted(instruments) if inst.lower()]
+        print(f"Using models: {', '.join(m for m in model)} for instruments: {self.instruments}")
+        self.file_path =Path(file_path)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.get_progress_hook)
+        self.timer.start(250)
 
         self.keep_all = keep_all
-        self.ext = file_path.split('.')[-1]
-        if self.ext == 'mp4':
-            ffmpeg.input(self.file_path).output(self.file_path.replace('.mp4', '.wav')).run(overwrite_output=True)
-            self.ext = 'wav'
-            self.file_path = self.file_path.replace('.mp4', '.wav')  
+        self.ext = Path(file_path).suffix
+        
 
 
     def run(self):
         self.split_stems(self.file_path)
+    
+    def get_progress_hook(self):
+        self.progress.emit("good ",int(get_progress()))
 
     
-        #self.progress.emit(message)
-    
-    @staticmethod   
-    def get_console_python():
-        import shutil
-        import os
-        
-        cur_dir = os.path.dirname(os.path.abspath(__file__))
-        python_executable = os.path.join(cur_dir, 'cx', 'Scripts', 'python.exe')
-        if not os.path.exists(python_executable):
-            python_executable = shutil.which('python')
-            if not python_executable:
-                raise EnvironmentError("Python executable not found in the expected location or in PATH.")
-        return python_executable
-
-
     def stems_exist(self, file_path, model):
-        file_name = os.path.basename(file_path).split('.')[0]
-        dir = os.path.dirname(file_path).replace("\\", "/")
+        
+        self.ext_out = 'wav'  
+        file_path = Path(file_path)
+        file_name = file_path.name
+        dir = file_path.parent
         print(f"Checking stems in directory: {dir}")
-        if not os.path.isdir(dir):
+        if not dir.is_dir():
             return False
-        model_output_dir = os.path.join(dir, f"{file_name}").replace("\\", "/")
-        if not os.path.isdir(model_output_dir):
+        model_output_dir = dir / file_name
+        if not model_output_dir.is_dir():
             return False
         files = os.listdir(model_output_dir)
         if not files:
             return False
         for file in files:
-            if file.endswith('.wav') or file.endswith('.mp3'):
-                if file.split('.')[0] not in self.instruments:
-                    return False
+            if Path(file).name not in self.instruments:
+                return False
         return True
 
 
     def split_stems(self, file_path=None):
         
         if file_path:
-            file_name = os.path.basename(file_path).split('.')[0]
+            file_path = Path(file_path)
+            print('fp', file_path)
+            file_name = file_path.stem
+            ext = file_path.suffix
+            if self.ext != ext:
+                ffmpeg.input(self.file_path).output(Path(file_path).with_suffix('.wav')).run(overwrite_output=True)
             print(f"File name: {file_name}")
-            dir = os.path.dirname(file_path).replace("\\", "/")
+            dir = Path(file_path).parent
             print(f"Directory: {dir}")
-        if not os.path.isdir(dir):
-            os.makedirs(dir, exist_ok=True)
-        
+            if not dir.exists():
+                os.makedirs(dir, exist_ok=True)
+            files = os.listdir(file_path.parent)
+            
+        else:
+            return
+
+        self.stem_list = []
         self.splitter_output = None
         self.waiting = True
-        for m in self.model:
-            
-            model_output_dir = os.path.join(dir, f"{file_name}_{m}_stems")
-            model_output_dir = model_output_dir.replace("\\", "/")
-            if self.stems_exist(model_output_dir, m):
-                print(f"Stems already exist for model {m}, skipping...")
+        for i,m in enumerate(self.models):
+            if self.stems_exist(file_path, self.model_names[i]):
+                print(f"Stems already exist for model {self.model_names[i]}, skipping...")
                 continue
-            print(f"Model output directory: {model_output_dir}")
-            os.makedirs(model_output_dir, exist_ok=True)
-            try:                    
-                if len(self.instruments) == 1:
-                    process_args = [self.get_console_python(), "-m", "demucs", "-n", m, "-o", os.path.abspath(model_output_dir).replace("\\", "/"), os.path.abspath(file_path), '--shifts=' + str(self.shifts), '--two-stems=' + self.instruments[0]]
-                    self.splitter_output = StemSplitterOutput(process_args)
-                 
-                    self.splitter_output.run()
-                else:
-                    process_args = [self.get_console_python(), "-m", "demucs", "-n", m, "-o", os.path.abspath(model_output_dir).replace("\\", "/"), os.path.abspath(file_path), '--shifts=' + str(self.shifts)]
-                    self.splitter_output = StemSplitterOutput(process_args)
-
-                    self.splitter_output.run()
-
-                temp_directory = os.path.join(model_output_dir, m, file_name).replace("\\", "/")
-                print(f"Temp directory: {temp_directory}")
-                files = os.listdir(temp_directory)
-                print(f"Files in temp directory: {files}")
-
-                for file in files:
-                    if file.endswith('.wav') or file.endswith('.mp3'):
-                        if file.split('.')[0] in self.instruments:
-                            shutil.move(os.path.join(temp_directory,file),model_output_dir)
-                            continue
-                        elif file.split('.')[0] not in self.instruments:
-                            os.remove(os.path.join(temp_directory,file))
-                    else:
-                        shutil.move(os.path.join(temp_directory,file),model_output_dir)
-
-                shutil.rmtree(os.path.join(model_output_dir, m).replace("\\", "/"))
-
+            origin, stems = m.separate_audio_file(file_path)
+            print("stems.items() = ", stems.items())
+            
+            for file,sources in stems.items():
+                
+                out_file = f"{file}{ext}"  
+                
+  
+                out_path = dir / file_name / out_file
+                os.makedirs(Path(out_path).parent, exist_ok=True)
+                if file in self.instruments:
                     
+                    save_audio(sources, rf'{out_path.absolute()}', m.samplerate)
+                    print('saved ', file)
+                    continue
                 
                 
-
-            except Exception as e:
-                self.finished.emit(f"Error: {str(e)}")
-                traceback.print_exc()
-                return
-        self.finished.emit(f"Stem splitting completed for {str(self.model)} models.")
+                
+            print(f"Stems saved in {dir}/{file_name}/")
+        self.timer.stop()
+            
 
 
-        #self.combine_outputs(os.listdir(os.path.join(model_output_dir, file_name)), os.path.join(model_output_dir, file_name, 'combined.wav'), different_instruments=self.instruments)
+        self.finished.emit(dir / file_name)
 
+
+       
     # Combines the outputs of the stems, not sure whether this helps or not, but keeping it for potential future use
     def combine_outputs(self, files, output_path, different_instruments=None):
         if different_instruments:
@@ -222,5 +179,6 @@ class StemSplitter(QThread):
         avg_audio = np.clip(avg_audio, -32768, 32767).astype(np.int16)
         os.makedirs(output_path.split('.')[0].split('\\')[0], exist_ok=True)
         wavfile.write(os.path.join(output_path, 'mixture.wav'), sample_rates[0], avg_audio)
+
 
 

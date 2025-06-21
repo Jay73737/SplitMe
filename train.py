@@ -1,181 +1,194 @@
-import yaml
+from demucs import wav
+from moisesdb.dataset import MoisesDB
+from pathlib import Path
 import os
 from pydub import AudioSegment
-import sys
-import librosa
-import soundfile as sf
-
-
-
-
+import shutil
+from pydub.generators import Sine
+from concurrent.futures import ThreadPoolExecutor, wait
 import traceback
-#from demucs.train import get_datasets 
 
-#path = r'C:\Users\justm\Downloads\babyslakh_16k.tar\babyslakh_16k'
-path = r'D:\slakh2100_flac_redux.tar\slakh2100_flac_redux\validation'
-folders = os.listdir(path)
-import os
-os.environ["PATH"] += os.pathsep + os.path.abspath("ytdownloader/ffmpeg")
-dataset_path = r'D:\dataset'
-output_path = os.path.join(dataset_path, 'train')
-sources = ["vocals", "drums", "bass", "guitar", "other"]
-os.makedirs(output_path, exist_ok=True)
-os.makedirs(dataset_path, exist_ok=True)
-temp_dict = {}
+standard_folders = ['bass', 'drums', 'vocals', 'guitar', 'other']
 
-def align_audio_length(folder_path):
-    
-# Force stems to match the length of the mixture
-    y_mix, sr = librosa.load(os.path.join(folder_path, "mixture.wav"), sr=44100)
-    expected_len = len(y_mix)
+# Parses the track number from the file name
+def parse_track(file):
+    pfile = Path(file)
+    file_list = pfile.parts
+    return file_list[-3]
 
-    for stem in ["vocals", "drums", "guitar", "bass", "other"]:
-        y, _ = librosa.load(f"{stem}.wav", sr=44100)
-        y = librosa.util.fix_length(y, expected_len)
-        sf.write(f"{stem}.wav", y, sr)
-        print(f"Aligned {os.path.join(folder_path,stem)} to {expected_len} samples.")
-
-
-def generate_silent_audio(stem, duration, fpath):
-    """
-    Generate a silent audio file with the given duration.
-    """
-    silent_audio = AudioSegment.silent(duration=duration)
-    dir_path = os.path.dirname(fpath)
-    out_path = os.path.join(dir_path, f"{stem}.wav")
-    if not os.path.exists(dir_path):
-        os.makedirs(dir_path)
-    silent_audio.export(out_path, format='wav')
-    return out_path
-
-def get_duration(path):
-    """
-    Get the duration of an audio file in milliseconds.
-    """
-    audio = get_audio_segment(path)
-    return len(audio)
-
-def get_audio_segment(filepath):
-    ext = os.path.splitext(filepath)[1].lower()
-    if ext == '.wav':
-        return AudioSegment.from_wav(filepath)
-    elif ext == '.flac':
-        return AudioSegment.from_file(filepath, format='flac')
+# this checks if the stem has the .wav extension and checks if it is in the sources.  It will return false if a weird file is fed into it.
+def is_same_stem_no_ext(stem1, return_string = False):
+    global standard_folders
+    p =Path(stem1).suffix
+    if p is not None:
+        temp = stem1[:-4]
     else:
-        raise ValueError(f"Unsupported file extension: {ext}")
+        temp = stem1
+    if return_string:
+        return temp 
+    return temp in standard_folders
 
+def combine_stem_files(root_dir, stems=standard_folders, output_name='mixture.wav'):
+    """Combine all audio files in each stem folder into one file per stem."""
 
-def combine_audios(source, paths, output_location):
-    if not paths:
-        return None
-    if source != 'vocals':
-        try:
-            if os.path.exists(paths[0]):
-                combined = get_audio_segment(paths[0])
-
-        except FileNotFoundError:
-            traceback.print_exc()
-
-            print(f"{source} File not found: {paths[0]}")
-            return None
-        if len(paths) == 1:
-            out_path = os.path.join(output_path, output_location)
-            if not os.path.exists(out_path):
-                os.makedirs(out_path)
-            out_path = os.path.join(out_path, f"{source}.wav")
-            result = combined.export(out_path, format='wav')
-            return out_path
-        for p in paths[1:]:
-            try:
-                if os.path.exists(p):
-                    combined.overlay(get_audio_segment(p))
-                else:
-                    print(f"File not found: {p}")
-                    combined.overlay(get_audio_segment(p))
-            except FileNotFoundError:
-                traceback.print_exc()
-
-                print(f"{source} File not found: {p}")
-                continue
+    stem_path = Path(root_dir) 
     
-        out_path = os.path.join(output_path,output_location)
-        if not os.path.exists(out_path):
-            os.makedirs(out_path)
-        out_path = os.path.join(out_path, f"{source}.wav")
-        result = combined.export(out_path, format='wav')
-        print(f'{out_path} is {str(get_duration(out_path))} miliseconds')
+    audio_files = sorted([f for f in stem_path.iterdir() if f.suffix == '.wav'])
+    if not audio_files:
+        return
+    combined = None
+    for audio_file in audio_files:
+        try:
+            seg = AudioSegment.from_file(audio_file)
+            if combined is None:
+                combined = seg
+            else:
+                combined = combined.overlay(seg)
+        except Exception as e:
+            print(f"Error reading {audio_file}: {e}")
+    if combined:
+        out_file = stem_path / output_name
+        combined.export(out_file, format='wav')
+        print(f"Combined {len(audio_files)} files in {stem_path} into {out_file}")
 
-        return out_path
 
-def prepare_dataset(path):
-    for folder in folders:
-        out_file_list = []
-        folder_path = os.path.join(path, folder)
-        if os.path.isdir(folder_path):
-            files = os.listdir(folder_path)
-            if 'validation' in folders:
-                folders.remove('validation')
-                continue
-            
-            for file in files:
+def get_all_files(root_dir):
+    """Return a list of all file paths under root_dir (recursively)."""
+    all_files = {}
+    for dirpath, dirnames, filenames in os.walk(root_dir):
+        for filename in filenames:
+            all_files[filename] = {'file': os.path.join(dirpath, filename), 'dirnames': dirnames}
+    return all_files
+
+file_dict = {}
+
+data_path=Path(r'C:\Users\justm\Desktop\dataset\moisesdb\moisesdb\moisesdb_v0.1')
+output_path=Path(r'c:\Users\justm\Desktop\dataset\proper')
+t = get_all_files(data_path)
+last_dir_name = 'moisesdb_v0.1'
+final_dict = {}
+
+directory = Path(data_path)
+
+
+def combine_audios(directory: Path, mixture=False):
+    
+    for item in directory.iterdir():
+        dir_list = []
+        if item.is_file():
+            print(f"File: {item.name}")
+        elif item.is_dir():
+            for it in item.iterdir():
+                if it.name in standard_folders:
+                    itparts = it.parts
+                    ind = itparts.index(last_dir_name)
+                    
+                    p = output_path
+                    for ip in itparts[ind+1:]:
+                        p = p / ip
+                    
+                    
+                    if mixture:
+                        final_out = p.parent / Path("mixture.wav")
+                    else:
+                        final_out = p 
+                    combine_stem_files( it, final_out)
+
+
+def replace_out(input_tuple):
+    input = data_path / Path(input_tuple[0]) / Path(input_tuple[1])
+    files = os.listdir(input)
+    for f in files:
+        try:
+            if input_tuple[1] in f:
+                final_in = input / Path(f)
                 
-                if file == 'metadata.yaml':
-                    meta_path = os.path.join(folder_path, file)
-                    with open(meta_path, 'r', encoding='utf-8') as f:
-                        meta = yaml.safe_load(f)
-                    temp_dict = {}
-                    for st in meta['stems'].keys():
-                        name = st
-                        source = meta['stems'][st]['inst_class'].lower()
-                        if source not in sources:
-                            source = 'other'
-                        # Try both .wav and .flac
-                        wav_path = os.path.join(folder_path, 'stems', st + '.wav')
-                        flac_path = os.path.join(folder_path, 'stems', st + '.flac')
-                        if os.path.exists(wav_path):
-                            audio_path = wav_path
-                        elif os.path.exists(flac_path):
-                            audio_path = flac_path
+                if Path(f).suffix == '.wav':
+                    final_out = Path(output_path) / Path(input_tuple[0]) / f
+                    
+                else:
+                    stem = input_tuple[0] + '.wav'
+                    os.rename(final_in, Path(stem))   
+                    final_out = Path(output_path)  / Path(input_tuple[0]) / Path(stem)
+                shutil.move(final_in, final_out) 
+        except:
+            pass
+
+def build_dir_tuples(root):
+    directory = [d for d in Path(root).rglob('*') if d.is_dir()]
+    for dir in directory:
+        sub_dir = [d for d in Path(dir).rglob('*') if d.is_dir()]
+        for s in sub_dir:
+            files = os.listdir(s)
+            if len(files) == 0:
+                continue
+            stem = s.parts[-1]
+            for f in files:
+                try:
+                    if stem in f:
+                        if '.wav' in f:
+                            input_path = Path(s) / Path(f)
+                            outp_path = Path(output_path) / Path(stem) / f
+                            shutil.move(input_path, outp_path)
+                            print('moved ',input_path, ' to ', outp_path)
                         else:
-                            print(f"File not found for stem {st}: {wav_path} or {flac_path}")
-                            continue
-                        if temp_dict.get(source) is None:
-                            temp_dict[source] = {'paths': [audio_path]}
-                        else:
-                            temp_dict[source]['paths'].append(audio_path)
-                    for s in sources:
-                        if temp_dict.get(s) is None:
-                            continue
-                        else:
-                            if len(temp_dict[s]['paths']) > 0:
-                                # Combine the audio files for this source
-                                print(f"Combining {s} audio files...")
-                                # Combine the audio files for this source
-                                new_out = combine_audios(s, temp_dict[s]['paths'], folder)
-                                out_file_list.append(new_out)
-                                temp_dict[s]['paths'] = None
-                                vocals = generate_silent_audio('vocals', get_duration(new_out), new_out)
-                                out_file_list.append(vocals)
-                                new_out = combine_audios('mixture', out_file_list, folder)
-                                align_audio_length(folder_path)
+                            input_path = Path(s) / Path(f)
+                            
+                            renamed = input_path.name + '.wav'
+                            outp_path = Path(output_path) / Path(stem) / Path(renamed)
+                            os.rename(input_path,renamed)
+                            print('renamed ', input_path)
+                            input_path = Path(s) / Path(renamed)
+                            shutil.move(input_path, outp_path)
+                            print('rn move')
+                except:
+                    pass
 
-                    break
-prepare_dataset(output_path)
-'''import torch
-from demucs.htdemucs import HTDemucs
+def find_track_stems(root):
+    base_num = len(Path(root).parts)
+    rm_list = []
+    for d in Path(root).rglob('*'):
+        parts = d.parts
+        if d.is_file():
+            levels = len(parts)
+            if levels - base_num > 2:
+                if d.suffix == '.wav':
+                    name = d.name[:-4]
+                    if name != d.parts[-2]:
+                        final = d.parts[-2] + '.wav'
+                        try:
+                            os.rename(d, final)
+                        except:
+                            print('found file, deleting weird one ', d)
+                            os.remove(d)
+                    else:
+                        move_loc = d.parent.parent
+                        shutil.move(d, move_loc)
+        else:
+            levels = len(d.parts)
+            if levels - base_num > 1:
+                files = os.listdir(d)
+                if len(files) == 0:
+                    print('removing dir ', d)
+                    rm_list.append(d)
 
-# 5-source model
-sources = ["vocals", "drums", "bass", "guitar", "other"]
-model = HTDemucs(sources=sources)
+    return rm_list
 
-# Load pretrained state dict from 4-source htdemucs
-state = torch.load("htdemucs_ft.pth")
 
-# Remove head weights (they won't match)
-for key in list(state["state"].keys()):
-    if key.startswith("out"):
-        del state["state"][key]
+def find_empty_dirs(root):
+    empty_dirs = []
+    for d in Path(root).rglob('*'):
+        if d.is_dir() and not any(d.iterdir()):
+            empty_dirs.append(d.parts[-2:])
+    return empty_dirs
+rm = find_track_stems(output_path)
+[os.rmdir(r) for r in rm]
+with ThreadPoolExecutor(max_workers=16) as execute:
+    for d in Path(output_path).rglob('*'):
+        execute.submit(combine_stem_files,d)
+combine_audios(data_path)
 
-# Load remaining weights
-model.load_state_dict(state["state"], strict=False)'''
 
+
+#@forrename_directories_sequentially(data_path)  stems dir_paths, dir_names, files f.sos.walk(data_path)path = print(dir_names,dir_paths, files)taset\train",['vocals', 'guitar', 'bass', 'drums', 'other'],normalize=True, ext='.wav')
+valid = wav.build_metadata(r"d:\dataset\dataset\valid",['vocals', 'guitar', 'bass', 'drums', 'other'], ext='.wav')
