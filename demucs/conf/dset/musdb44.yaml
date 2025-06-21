@@ -1,0 +1,8 @@
+# @package _global_
+
+dset:
+  use_musdb: False
+  wav: C:\Users\justm\Desktop\Code\musmod\proper\
+  sources: ['drums', 'bass', 'other', 'vocals', 'guitar']
+  samplerate: 44100
+  channels: 2
