@@ -5,7 +5,10 @@ from pathlib import Path
 import json
 import os
 import traceback
+<<<<<<< HEAD
 from GUIComponents import APIKeyWindow
+=======
+>>>>>>> 0502c2081b01b9d5b4967bfb8b2eea56cc730617
 from contextvars import ContextVar
 YOUTUBE_API_SERVICE_NAME = 'youtube'
 YOUTUBE_API_VERSION = 'v3'
@@ -23,6 +26,7 @@ class YoutubeDownloader(QThread):
         self.url = url
         
         file_path = Path(__file__).parent / 'config.json'
+<<<<<<< HEAD
         with open(file_path, 'r') as f:
             parser = json.load(f)
             try:
@@ -32,6 +36,11 @@ class YoutubeDownloader(QThread):
                 api_window.finished.connect(self.return_api)
                 api_window.exec()
             self.youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=self.api_key)
+=======
+        with open(file_path, 'r+') as f:
+            parser = json.load(f)
+            api_key = parser['user']['api_key']
+>>>>>>> 0502c2081b01b9d5b4967bfb8b2eea56cc730617
             
         
     def return_api(self, key):
