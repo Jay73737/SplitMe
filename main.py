@@ -346,20 +346,20 @@ class MainGUI(QWidget):
 
         self.left_widget = QWidget()
         self.left_widget.setMinimumWidth(300)
-        self.left_widget.setMinimumWidth(300)
-        self.left_widget.setLayout(self.horizontal_layout)
         self.left_widget.setMaximumHeight(500)
+        self.left_widget.setLayout(self.horizontal_layout)
+        
         
         self.right_widget = QWidget()
         self.right_widget.setLayout(self.stem_layout)
         self.right_widget.setMinimumWidth(500)
-        self.side_by_side_layout.addWidget(self.left_widget)
-        self.right_widget.setMinimumWidth(500)
+        
+
         self.side_by_side_layout.addWidget(self.left_widget)
         self.side_by_side_layout.addWidget(self.vertical_divider)
         self.side_by_side_layout.addWidget(self.right_widget)
         
-        self.side_by_side_layout.addWidget(self.right_widget)
+       
         
         self.last_percent_done = 0
         self.progress_label = QLabel("")
@@ -386,7 +386,7 @@ class MainGUI(QWidget):
         self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.progress_layout.addLayout(split_progress_layout)
 
-        self.main_layout.addLayout(self.progress_layout, 0)
+        
 
         self.main_layout.addLayout(self.progress_layout, 0)
         self.percent_done = 0
@@ -416,7 +416,7 @@ class MainGUI(QWidget):
         previous_states = {checkbox.text(): checkbox.isChecked() for checkbox in self.model_checkboxes_group}
 
    
-        previous_states = {checkbox.text(): checkbox.isChecked() for checkbox in self.model_checkboxes_group}
+        
 
         self.split_button.setEnabled(self.filepath != "" and any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
         selected_instruments = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
@@ -440,7 +440,7 @@ class MainGUI(QWidget):
 
             models = sorted(list(set.intersection(*models)))
 
-            models = sorted(list(set.intersection(*models)))
+            
 
             if len(models) >= 1:
                 for model in models:
@@ -484,8 +484,11 @@ class MainGUI(QWidget):
                 self.search_youtube()
         elif 'video' in url:
             self.url_input.setText(url)
-            self.config_params['user']['config']['sources']
-            self.config_params['user']['config']['sources']
+            if 'sources' in self.config_params:
+
+                self.config_params['user']['cache']['sources'].append()
+            else:
+                self.config_params['user']['cache']['sources'] = [url]
             self.url_download = url
 
           
@@ -502,7 +505,7 @@ class MainGUI(QWidget):
     def search_youtube(self):
         if self.platform_yt.isChecked():
             self.ys = YoutubeDownloader(self.url_input.text())
-            self.ys = YoutubeDownloader(self.url_input.text())
+            
             self.ys.finished.connect(self.set_url)
             self.ys.error.connect(self.show_error)
             self.ys.start()
@@ -568,8 +571,7 @@ class MainGUI(QWidget):
             self.save_label.setText(f"Save Location: {folder}")
             self.config_params['user']['cache']['last_file_path_downloader'] = self.save_path
             MainGUI.write_config(self,'last_file_path_downloader',self.config_params['user']['cache']['last_file_path_downloader'])
-            self.config_params['user']['cache']['last_file_path_downloader'] = self.save_path
-            MainGUI.write_config(self,'last_file_path_downloader',self.config_params['user']['cache']['last_file_path_downloader'])
+
 
   
     # Creates the download thread to download the video.
@@ -584,7 +586,6 @@ class MainGUI(QWidget):
             return
         
               
-        self.download_thread = DownloadThread(url=url, save_path=self.save_path)
         self.download_thread = DownloadThread(url=url, save_path=self.save_path)
         self.download_thread.finished_signal.connect(self.download_complete)   
         
@@ -619,8 +620,7 @@ class MainGUI(QWidget):
         if self.filepath:
             stems_folder = Path(message)
             self.update_stems_display(stems_folder)
-            stems_folder = Path(message)
-            self.update_stems_display(stems_folder)
+            
 
     # Progress for stem splitting
     def update_progress(self, message, percent_done=None):
@@ -676,10 +676,7 @@ class MainGUI(QWidget):
             self.downloaded_song_box.setVisible(True)
             self.select_file_location(file)
             self.save_label.setText(f"Save Location: {file}")
-            self.select_file_location(file)
-            self.save_label.setText(f"Save Location: {file}")
             self.filepath = file_path
-            self.split_stems_file.setText(f"Loaded File: {file}")
             self.split_stems_file.setText(f"Loaded File: {file}")
             self.progress_bar.hide()
         else:

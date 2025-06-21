@@ -11,7 +11,7 @@ from pathlib import Path
 import time
 import sys
 
-sys.path.append("C:/Users/justm/Desktop/Code/ytdownloader/src/SplitMe_Jay73737/demucs")
+
 
 class UpdaterWorker(QThread):
     update_signal = pyqtSignal(str)

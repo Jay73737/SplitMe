@@ -52,15 +52,11 @@ class DownloadThread(QThread):
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 out = ydl.download([self.url])
-                eval = ydl.extract_info(self.url)
-                
+                eval = ydl.extract_info(self.url)                
                 
                 
                 pth = Path(self.save_path)/Path(eval['title'] ).with_suffix('.webm')
-                opth = Path(pth).with_suffix('.wav')
-                print('pth---------',pth.absolute())
-                print('opth------------------',opth.absolute())
-                
+                opth = Path(pth).with_suffix('.wav')             
                 
                 self.finished_signal.emit(True,  opth)
 
