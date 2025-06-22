@@ -141,7 +141,7 @@ git clone $repoUrl $targetPath
 $requirementsFile = Join-Path $targetPath "requirements.txt"
 if (Test-Path $requirementsFile) {
     & $pipExe install -r $requirementsFile
-    & $pipExe install torch==2.6.0  torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu118
+    & $pipExe install torch  torchaudio --index-url https://download.pytorch.org/whl/cu121
     Write-Host "✅ Python packages installed."
 } else {
     Write-Host "requirements.txt not found, skipping pip install."
