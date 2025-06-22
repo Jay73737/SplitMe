@@ -1,7 +1,7 @@
 
 import os
-from demucs.apply import get_progress
-from demucs.api import Separator, save_audio
+from _demucs.apply import get_progress
+from _demucs.api import Separator, save_audio
 
 import numpy as np
 from scipy.io import wavfile
