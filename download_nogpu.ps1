@@ -1,117 +1,152 @@
-# Requires PowerShell 5.0+
-# Run as Administrator
+# Relaunch script as administrator
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(`
+    [Security.Principal.WindowsBuiltInRole] "Administrator"))
+{
+    Start-Process powershell "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Write-Host "restarting powershell "
+    exit
+}
 
-# Function to check if a program is available
+
+
+Import-Module BitsTransfer
+# Bypass script execution policy for this session
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+
+# === Parameters ===
+$pythonVersion = "3.9.13"
+$pythonTag = "python-$pythonVersion-amd64"
+
+$installerUrl = "https://www.python.org/ftp/python/$pythonVersion/python-$pythonVersion-amd64.exe"
+
+$pythonInstallerPath = "$env:TEMP\$pythonTag.exe"
+$pythonInstallDir = "$env:LocalAppData\Programs\Python\Python310"
+
+$ffmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+$scriptDirectory = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+Write-Host $scriptDirectory
+$ffmpegDirectory = Join-Path -Path $scriptDirectory -ChildPath "ffmpeg"
+
+$cudaVersion = "12.1.0"
+$cudaInstallerPath = "$env:TEMP\cuda_installer.exe"
+$cudaDownloadUrl = "https://developer.download.nvidia.com/compute/cuda/12.1.0/local_installers/cuda_12.1.0_531.14_windows.exe"
+$minCudaVersion = [version]"12.1.0"
+
+# === Helper function to check if command exists ===
 function Test-CommandExists {
-    param ($cmd)
-    return Get-Command $cmd -ErrorAction SilentlyContinue
+    param([string]$cmd)
+    return $null -ne  (Get-Command $cmd -ErrorAction SilentlyContinue)
 }
 
-# Ensure script is running from its own directory
-Set-Location -Path $PSScriptRoot
-
-Write-Host "Checking for Python 3.10.11..."
-$pythonInstalled = $false
-if (Test-CommandExists python) {
-    $version = python --version 2>&1
-    if ($version -like "*3.10.11*") {
-        $pythonInstalled = $true
-    }
-}
-
-if (-not $pythonInstalled) {
-    Write-Host "Installing Python 3.10.11..."
-    winget install --exact --id Python.Python.3.10 --version 3.10.11 --silent --accept-package-agreements --accept-source-agreements
-    $env:Path += ";$env:LocalAppData\Programs\Python\Python310\Scripts;$env:LocalAppData\Programs\Python\Python310"
-}
-
-# Refresh PATH for current session
-$env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-
-# Check for ffmpeg
-Write-Host "Checking for FFmpeg..."
-$ffmpegInstalled = Test-CommandExists ffmpeg
-
-if (-not $ffmpegInstalled) {
-    Write-Host "Installing FFmpeg..."
-    $ffmpegZip = "$env:TEMP\ffmpeg.zip"
-    $ffmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
-    Invoke-WebRequest -Uri $ffmpegUrl -OutFile $ffmpegZip
-    Expand-Archive -Path $ffmpegZip -DestinationPath "$env:ProgramFiles\ffmpeg" -Force
-    $ffmpegBin = Get-ChildItem "$env:ProgramFiles\ffmpeg" -Recurse -Filter "ffmpeg.exe" | Select-Object -First 1 | Split-Path
-    [Environment]::SetEnvironmentVariable("Path", $env:Path + ";$ffmpegBin", [System.EnvironmentVariableTarget]::Machine)
-    Write-Host "FFmpeg installed and added to PATH."
-}
-
-
-if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-    Write-Warning "Git not found. Attempting to install with winget..."
-
-    winget install --id Git.Git -e --source winget --silent --accept-package-agreements --accept-source-agreements
-
-
-   
-    Start-Sleep -Seconds 5
-
-    if (Get-Command git -ErrorAction SilentlyContinue) {
-        Write-Host "Git successfully installed."
-    } else {
-        Write-Error "Git installation failed."
-        exit 1
-    }
+# === Check and Install Python if needed ===
+if (Test-Path "$pythonInstallDir\python.exe") {
+    Write-Host "Python already installed at $pythonInstallDir"
 } else {
-    Write-Host "Git is already installed."
+    Write-Host "Downloading Python $pythonVersion..."
+
+    Start-BitsTransfer -Source $installerUrl -Destination $pythonInstallerPath
+
+    Write-Host "Installing Python $pythonVersion..."
+    Start-Process -FilePath $pythonInstallerPath -ArgumentList @(
+        "/quiet",
+        "InstallAllUsers=0",
+        "PrependPath=1",
+        "Include_pip=1",
+        "Include_launcher=1",
+        "TargetDir=$pythonInstallDir"
+    ) -Wait
+
+    Remove-Item $pythonInstallerPath
 }
 
-# Check for Git
-Write-Host "Checking for Git..."
-if (-not (Test-CommandExists git)) {
-    Write-Host "Installing Git..."
-    winget install --id Git.Git --silent --accept-package-agreements --accept-source-agreements
+$pythonExe = "$pythonInstallDir\python.exe"
+$pipExe = "$pythonInstallDir\Scripts\pip.exe"
+
+if (!(Test-Path $pythonExe)) {
+    Write-Error "Python installation failed!"
+    exit 1
+}
+
+Write-Host "✅ Python installed at $pythonInstallDir"
+
+
+
+# === Check and Install FFmpeg if needed ===
+if (Test-Path (Join-Path $ffmpegDirectory "ffmpeg.exe")) {
+    Write-Host "FFmpeg already installed in $ffmpegDirectory"
 } else {
-    Write-Host "Git is already installed."
-}
+    Write-Host "Downloading ffmpeg binaries..."
+    if (!(Test-Path $ffmpegDirectory)) {
+        New-Item -ItemType Directory -Path $ffmpegDirectory | Out-Null
+    }
+
+    $zipFilePath = Join-Path -Path $ffmpegDirectory -ChildPath "ffmpeg.zip"
+    Write-Host $zipFilePath
+    Start-BitsTransfer -Source $ffmpegUrl -Destination $zipFilePath
 
 
+    Write-Host "Extracting ffmpeg binaries..."
+    Expand-Archive -Path $zipFilePath -DestinationPath $ffmpegDirectory -Force
 
-# Clone Git repos
-Write-Host "Cloning Git repositories..."
-$repos = @(
-    "https://github.com/Jay73737/SplitMe.git"
+
+    # Move ffmpeg.exe and ffprobe.exe to top-level
+    $extractedFolder = Get-ChildItem -Path $ffmpegDirectory -Directory | Select-Object -First 1
+    $extractedPath = $extractedFolder.FullName
+
+    $ffmpegExe = Join-Path -Path $extractedPath -ChildPath "ffmpeg.exe"
+    $ffprobeExe = Join-Path -Path $extractedPath -ChildPath "ffprobe.exe"
+
+    if (Test-Path $ffmpegExe) { Move-Item $ffmpegExe -Destination $ffmpegDirectory -Force }
+    if (Test-Path $ffprobeExe) { Move-Item $ffprobeExe -Destination $ffmpegDirectory -Force }
+
+    # Cleanup extracted folders/files except ffmpeg.exe and ffprobe.exe
+    Get-ChildItem -Path $ffmpegDirectory | Where-Object { $_.Name -notmatch "^(ffmpeg\.exe|ffprobe\.exe)$" } | Remove-Item -Recurse -Force
+
+    Write-Host "Cleaned up the ffmpeg folder, retaining only ffmpeg.exe and ffprobe.exe."
     
-)
 
-foreach ($repo in $repos) {
-    $repoName = ($repo -split "/")[-1] -replace ".git", ""
-    $targetPath = Join-Path $PSScriptRoot $repoName
-
-    if (-not (Test-Path $targetPath)) {
-        git clone $repo $targetPath
-    } else {
-        Write-Host "$repoName already exists. Skipping clone."
+    # Add ffmpeg directory to user PATH if not already present
+    $oldPath = [Environment]::GetEnvironmentVariable("Path", "User")
+    if (-not ($oldPath -split ";" | Where-Object { $_ -eq $ffmpegDirectory })) {
+        $newPath = "$oldPath;$ffmpegDirectory"
+        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+        Write-Host "Added ffmpeg to user PATH."
     }
 }
 
-# Install Python requirements if file exists
-$requirementsPath = Join-Path $PSScriptRoot "requirements.txt"
-if (Test-Path $requirementsPath) {
-    Write-Host "Installing Python dependencies from requirements.txt..."
-    python -m pip install --upgrade pip
-    pip install -r $requirementsPath
-} else {
-    Write-Host "No requirements.txt file found. Skipping pip install."
-}
+# === Create Desktop Shortcut to launch your Python script ===
+$shortcutPath = "$env:USERPROFILE\Desktop\SplitIt.lnk"
+$scriptPath = Join-Path $scriptDirectory "main.py"
 
-# Create shortcut to run main.py
-Write-Host "Creating Python shortcut for main.py..."
-$WScriptShell = New-Object -ComObject WScript.Shell
-$shortcutPath = "$PSScriptRoot\RunMain.lnk"
-$pythonPath = (Get-Command python).Source
-$mainPy = Join-Path $PSScriptRoot "\SplitMe\main.py"
-$shortcut = $WScriptShell.CreateShortcut($shortcutPath)
-$shortcut.TargetPath = $pythonPath
-$shortcut.Arguments = "`"$mainPy`""
-$shortcut.WorkingDirectory = $PSScriptRoot
-$shortcut.WindowStyle = 1
+$WshShell = New-Object -ComObject WScript.Shell
+$shortcut = $WshShell.CreateShortcut($shortcutPath)
+$shortcut.TargetPath = $pythonExe
+$shortcut.Arguments = "`"$scriptPath`""
+$shortcut.WorkingDirectory = Split-Path $scriptPath
+$shortcut.IconLocation = "$scriptPath\icon.ico,0"
 $shortcut.Save()
-Write-Host "`nSetup complete!"
+
+Write-Host "Created desktop shortcut: $shortcutPath"
+
+
+
+$scriptPath = $PSScriptRoot
+$repoUrl = "https://github.com/Jay73737/SplitMe.git"
+$targetPath = Join-Path -Path $scriptPath -ChildPath $repoName
+
+
+
+git clone $repoUrl $targetPath
+# Install pip packages from requirements.txt if it exists
+$requirementsFile = Join-Path $targetPath "requirements.txt"
+if (Test-Path $requirementsFile) {
+    & $pipExe install -r $requirementsFile
+    & $pipExe install torch==2.6.0  torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu118
+    Write-Host "✅ Python packages installed."
+} else {
+    Write-Host "requirements.txt not found, skipping pip install."
+}
+git clone https://github.com/adefossez/demucs.git $targetPath
+
+Pause
+
