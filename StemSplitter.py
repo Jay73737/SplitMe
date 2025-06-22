@@ -1,7 +1,7 @@
 
 import os
-from demucs.demucs.apply import get_progress
-from demucs.demucs.api import Separator, save_audio
+from demucs.apply import get_progress
+from demucs.api import Separator, save_audio
 
 import numpy as np
 from scipy.io import wavfile
@@ -61,10 +61,8 @@ class StemSplitter(QThread):
         self.stem = None
         self.shifts = shifts
         self.models = [Separator(m, shifts = shifts, progress=True) for m in model]
-        self.model_names = model
-        print(f'Instruments: {sorted(instruments)}')
-        self.instruments = [inst.lower() for inst in sorted(instruments) if inst.lower()]
-        print(f"Using models: {', '.join(m for m in model)} for instruments: {self.instruments}")
+        self.model_names = model        
+        self.instruments = [inst.lower() for inst in sorted(instruments) if inst.lower()]        
         self.file_path =Path(file_path)
         self.timer = QTimer()
         self.timer.timeout.connect(self.get_progress_hook)
@@ -84,7 +82,7 @@ class StemSplitter(QThread):
     
     def stems_exist(self, file_path, model):
         
-        self.ext_out = 'wav'  
+        self.ext_out = 'wav'
         file_path = Path(file_path)
         file_name = file_path.name
         dir = file_path.parent
@@ -130,12 +128,9 @@ class StemSplitter(QThread):
                 print(f"Stems already exist for model {self.model_names[i]}, skipping...")
                 continue
             origin, stems = m.separate_audio_file(file_path)
-            print("stems.items() = ", stems.items())
-            
-            for file,sources in stems.items():
-                
-                out_file = f"{file}{ext}"  
-                
+                    
+            for file,sources in stems.items():                
+                out_file = f"{file}{ext}"               
   
                 out_path = dir / file_name / out_file
                 os.makedirs(Path(out_path).parent, exist_ok=True)
@@ -149,11 +144,7 @@ class StemSplitter(QThread):
                 
             print(f"Stems saved in {dir}/{file_name}/")
         self.timer.stop()
-            
-
-
         self.finished.emit(dir / file_name)
-
 
        
     # Combines the outputs of the stems, not sure whether this helps or not, but keeping it for potential future use

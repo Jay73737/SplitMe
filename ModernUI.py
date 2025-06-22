@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QStackedLayout, QGraphicsOpacityEffect, QSizePolicy
 )
 
+import json
 # defining constants because i cant be fucked to type these out every time
 WIDTH, HEIGHT = 800, 80
 BORDER        = 6

@@ -1,17 +1,2 @@
-*.egg-info
-__pycache__
-Session.vim
-/build
-/dist
-/lab
-/metadata
-/notebooks
-/outputs
-/release
-/release_models
-/separated
-/tests
-/trash
-/misc
-/mdx
-.mypy_cache
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*

@@ -117,6 +117,9 @@ class DraggableStemLabel(QFrame):
         self.player.positionChanged.connect(self.update_position_slider)
         self.player.durationChanged.connect(self.update_duration)
 
+    def set_audio_source(self, source):
+        self.player.setSource(QUrl(source))
+
     def pause_song(self):
         """Pause the song while seeking."""
         self.player.pause()

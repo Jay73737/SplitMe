@@ -2,6 +2,7 @@ from PyQt6.QtCore import QThread, pyqtSignal
 import yt_dlp
 import os
 import traceback
+import ffmpeg
 from pathlib import Path
 from contextvars import ContextVar
 import os
@@ -34,10 +35,7 @@ class DownloadThread(QThread):
         self.ffmpeg_path = os.path.abspath('ffmpeg')
         os.environ["PATH"] += os.pathsep + self.ffmpeg_path
 
-    def run(self):  
-
-        
-        
+    def run(self):   
         
         ydl_opts = {
             
@@ -52,14 +50,11 @@ class DownloadThread(QThread):
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 out = ydl.download([self.url])
-                eval = ydl.extract_info(self.url)                
-                
-                
+                eval = ydl.extract_info(self.url)                     
                 pth = Path(self.save_path)/Path(eval['title'] ).with_suffix('.webm')
-                opth = Path(pth).with_suffix('.wav')             
                 
+                opth = Path(pth)       
                 self.finished_signal.emit(True,  opth)
-
         except Exception as e:
                 traceback.print_exc()
                 self.finished_signal.emit(False, Path())
