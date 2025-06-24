@@ -1,0 +1,8 @@
+
+/__pycache__/
+/config.json
+**/__pycahce__/
+*.wav
+/ffmpeg/
+/SplitMe/
+/_demucs/__pycache__/
