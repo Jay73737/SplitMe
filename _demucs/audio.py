@@ -96,6 +96,7 @@ class AudioFile:
                 Our definition of mono is simply the average of the two channels. Any other
                 value will be ignored.
         """
+        
         streams = np.array(range(len(self)))[streams]
         single = not isinstance(streams, np.ndarray)
         if single:
@@ -222,9 +223,12 @@ def prevent_clip(wav, mode='rescale'):
     """
     if mode is None or mode == 'none':
         return wav
+    print(type(wav))
+    if not isinstance(wav, torch.Tensor):
+        wav = torch.tensor(wav)
     assert wav.dtype.is_floating_point, "too late for clipping"
     if mode == 'rescale':
-        wav = wav / max(1.01 * wav.abs().max(), 1)
+        wav = wav / max(1.01 * abs(wav).max(), 1)
     elif mode == 'clamp':
         wav = wav.clamp(-0.99, 0.99)
     elif mode == 'tanh':

@@ -9,7 +9,7 @@ from pathlib import Path
 class APIKeyWindow(QDialog):
     finished = pyqtSignal(str)
     def __init__(self,parent=None):
-        super().__init__(parent)
+        super().__init__()
         self.setWindowTitle("Enter API Key")
         self.setFixedSize(300, 120)
         self.api_key = ""
@@ -50,6 +50,7 @@ class DraggableStemLabel(QFrame):
         self.setStyleSheet("QFrame { border: 2px solid #888; border-radius: 6px; background: #888888; }")
         self.setCursor(Qt.CursorShape.OpenHandCursor)        
 
+        
         self.player = QMediaPlayer(self)
         self.audio_output = QAudioOutput(self)
         self.player.setAudioOutput(self.audio_output)

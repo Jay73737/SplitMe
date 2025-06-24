@@ -18,20 +18,13 @@ _ffmpeg_location.set('ffmpeg')
 class YoutubeDownloader(QThread):
     finished = pyqtSignal(list)
     error = pyqtSignal( str)
-    def __init__(self, url, soundcloud=False):
+    def __init__(self, url, config=None):
         super().__init__()
         self.url = url
-        
-        file_path = Path(__file__).parent / 'config.json'
-        with open(file_path, 'r') as f:
-            parser = json.load(f)
-            try:
-                self.api_key = parser['user']['api_key']
-            except:
-                api_window = APIKeyWindow(self)
-                api_window.finished.connect(self.return_api)
-                api_window.exec()
-            self.youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=self.api_key)
+        self.config = config
+        if config is not None:
+            if 'api_key' in  config:
+                self.youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=self.config['api_key'])
             
         
     def return_api(self, key):
