@@ -77,3 +77,10 @@ If you want to use the Youtube API to gather the links for downloading (if not y
 ```powershell
 python main.py
 ```
+
+
+## Credits
+
+- Developed by Justin Hild
+- Thanks to [Demucs](https://github.com/adefossez/demucs/tree/main) for creating the audio models and inspiring me to continue working on getting better quality data out.
+- Thanks also to [yt_dlp]([https://github.com/username/projec](https://github.com/yt-dlp/yt-dlp)t) for making pulling in sources to test on much easier.
