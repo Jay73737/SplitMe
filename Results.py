@@ -3,6 +3,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, pyqtSignal
 import requests
 import traceback
+
 class ClickableLabel(QLabel):
     clicked = pyqtSignal(str) 
 
@@ -32,13 +33,13 @@ class ResultsWindow(QDialog):
         for result in results:
             hbox = QHBoxLayout()
             
-            thumb_url = result.get('thumbnail')
+            thumb_url = result[1].get('thumbnail')
             if thumb_url:
                 try:
                     response = requests.get(thumb_url)
                     pixmap = QPixmap()
                     pixmap.loadFromData(response.content)
-                    thumb_label = ClickableLabel(result['title'], result['url'], pixmap)
+                    thumb_label = ClickableLabel(result[1]['title'], result[1]['url'], pixmap)
                     thumb_label.clicked.connect(self.send_url)
                     hbox.addWidget(thumb_label)
                 except Exception:
@@ -47,9 +48,9 @@ class ResultsWindow(QDialog):
             else:
                 hbox.addWidget(QLabel("No Image"))
 
-            title = result['title']
-            url = result['url']
-            desc = result.get('description', '')
+            title = result[1]['title']
+            url = result[1]['url']
+            desc = result[1].get('description', '')
 
             title_label = ClickableLabel(f"<b>{title}</b>", url)
             title_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
