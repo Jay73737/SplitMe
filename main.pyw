@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QApplication, QVBoxLayout, QLabel, QLineEdit, QPushButton,
     QFileDialog, QComboBox, QMessageBox, QProgressBar, 
     QCheckBox, QWidget, QPushButton,QStyle,QHBoxLayout, QFrame,
-      QSpinBox, QSizePolicy, QGroupBox
+      QSpinBox, QSizePolicy, QGroupBox, QSlider
 )
 from PyQt6.QtGui import QIcon, QDesktopServices
 from PyQt6.QtCore import Qt, QUrl
@@ -43,12 +43,12 @@ class MainGUI(QWidget):
         
         
         self.instrument_dict = {
-            "Vocals": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
-            "Bass": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"], 
-            "Drums": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"],
-            "Guitar": ["htdemucs_6s"],
+            "Vocals": ["htdemucs", "htdemucs_ft", "mdx_extra", "htdemucs_6s", "combo"], 
+            "Bass": ["htdemucs", "htdemucs_ft", "mdx_extra", "htdemucs_6s", "combo"], 
+            "Drums": ["htdemucs", "htdemucs_ft", "mdx_extra", "htdemucs_6s", "combo"],
+            "Guitar": ["htdemucs_6s", "combo"],
             "Piano": ["htdemucs_6s"],
-            "Other": ["htdemucs", "htdemucs_ft", "mdx", "htdemucs_6s"]
+            "Other": ["htdemucs", "htdemucs_ft", "mdx_extra", "htdemucs_6s", "combo"]
         }
         last_file_downloader = None
         last_file_splitter = None
@@ -156,21 +156,24 @@ class MainGUI(QWidget):
         self.main_layout = QVBoxLayout()
         self.side_by_side_layout = QHBoxLayout()
         self.horizontal_layout = QVBoxLayout()       
-             
+
+        # Youtube API checkbox     
         self.platform_yt = QCheckBox("Use YouTube API?", self)
         self.platform_yt.setChecked(True)
         self.platform_yt.setToolTip("Use YouTube API to search for videos. \nIf unchecked, you can paste a direct URL.")
         
+        ## Yoube URL/Search text box and label and search button
         self.url_label = QLabel("URL/Search:")
         self.url_input = QLineEdit(self)
         self.url_input.returnPressed.connect(self.search_youtube)
         self.link_layout = QVBoxLayout()
         self.link_layout = QVBoxLayout()
-
         self.search_button = QPushButton("Search")
         self.search_button.clicked.connect(self.search_youtube)
         self.link_layout.addWidget(self.search_button)
         self.link_layout.addWidget(self.search_button)
+
+        # Select format dropdown and quality dropdown
         self.format_label = QLabel("Select Format:")
         self.quality_dropdown = QComboBox(self)
         self.quality_dropdown.addItems(["Low (64kbps)", "Medium (128kbps)", "High (192kbps)"])
@@ -180,17 +183,20 @@ class MainGUI(QWidget):
         self.format_dropdown.currentTextChanged.connect(lambda: self.quality_dropdown.setDisabled('Audio - mp3' not in self.format_dropdown.currentText()))
         self.quality_label = QLabel("Select Audio Quality:")
 
+        # Select Save location, and download buttons
         self.save_button = QPushButton("Select Save Location")
         self.save_button.clicked.connect(self.select_save_location)
         self.download_button = QPushButton("Download")
         self.download_button.clicked.connect(self.download_video)
-        self.save_path = os.path.abspath('SplitMe')
+        self.save_path = Path(__file__).parent.absolute()
         self.save_label = QLabel(
-            f"Save Location: {Path(__file__).absolute()}"
+            f"Save Location: {self.save_path}"
         )
+        # Media player for when song is downloaded, might move to other side
         self.downloaded_song_box = DraggableStemLabel("None", None)
         self.downloaded_song_box.setVisible(False)
         
+        # This is for the entire left side up to the divider
         self.horizontal_layout.addWidget(self.platform_yt)   
         self.horizontal_layout.addWidget(self.url_label)
         self.horizontal_layout.addWidget(self.url_input)
@@ -202,32 +208,39 @@ class MainGUI(QWidget):
         self.horizontal_layout.addWidget(self.save_button)        
         self.horizontal_layout.addWidget(self.save_label)
         self.horizontal_layout.addWidget(self.download_button)
-
         self.horizontal_layout.addWidget(self.downloaded_song_box)       
         
+        # Divider in the middle
         self.vertical_divider = QFrame()
         self.vertical_divider.setFrameShape(QFrame.Shape.VLine) 
         self.vertical_divider.setFrameShadow(QFrame.Shadow.Sunken)
-        
+        self.right_side_total = QVBoxLayout()
+        # Layout for stems
         self.stem_layout = QVBoxLayout()
         self.split_stems_file = QLabel("Loaded File: ")
-        self.delete_original = QCheckBox("Delete original file?")
-        self.delete_original.setChecked(True)
-
+        self.delete_original = QCheckBox("Delete original file?") # If you want to delete the downloaded song
+  
+        
+        # The different sources that can be separated
         self.stems_group = QGroupBox("Stems")
-        self.stems_layout = QVBoxLayout()
+   
         self.stems_group.setVisible(False)
-        self.stems_group.setLayout(self.stems_layout)
-        self.stem_layout.addWidget(self.split_stems_file)  
-        self.stem_layout.addWidget(self.delete_original)
-        self.stem_layout.addWidget(self.split_stems_file)        
-        self.stem_layout.addWidget(self.stems_group)
-        self.split_button = QPushButton("Split Stems")
-        self.split_button.clicked.connect(self.split_stems)
-        self.stem_file_button = QPushButton("Select File")
-        self.stem_file_button.clicked.connect(self.select_file_location)
+        
+        self.right_side_total.addWidget(self.split_stems_file)  
+        self.right_side_total.addWidget(self.delete_original)
+        self.right_side_total.addWidget(self.split_stems_file)        
+        self.right_side_total.addWidget(self.stems_group)
 
+        
+        
+        self.stem_box = QFrame(self)
+
+        self.stem_box.setObjectName("myFrame")
+        self.stem_box.setFrameShape(QFrame.Shape.Box)
+        self.stem_box.setLineWidth(2)
+        self.stem_box.setStyleSheet("myFrame { border: 2px solid #888; border-radius: 6px; background-color: transparent; }" )
         self.checkbox_layout = QVBoxLayout()
+       
         checkbox_labels = sorted(self.instrument_dict.keys())
         checkbox_labels = sorted(self.instrument_dict.keys())
         self.split_stems_checkbox_group = []
@@ -237,8 +250,16 @@ class MainGUI(QWidget):
             checkbox.stateChanged.connect(self.on_checkbox_state_changed)
             self.split_stems_checkbox_group.append(checkbox)
             self.checkbox_layout.addWidget(checkbox)
-        self.stem_layout.addLayout(self.checkbox_layout)
-
+        self.right_side_total.addLayout(self.checkbox_layout)
+        self.overlap_label = QLabel(f"Overlap {50*1.5/100:.2f} sec")
+        self.overlap_label.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.overlap_label.setToolTip('Changes how much the segments of the track overlap when recombining. Higher values take longer but improve overall quality.')
+        self.overlap_slider = QSlider(Qt.Orientation.Horizontal, self)
+        self.overlap_slider.setFixedWidth(100)
+        self.overlap_slider.setRange(0, 100)
+        self.overlap_slider.setValue(50)
+        self.overlap_slider.valueChanged.connect(self.update_overlap_stem)
+        self.overlap_slider.setToolTip('Changes how much the segments of the track overlap when recombining. Higher values take longer but improve overall quality.')
         self.shift_spinbox = QSpinBox(self)
         self.shift_spinbox.setRange(1, 20)
         self.shift_spinbox.setValue(1)
@@ -246,6 +267,8 @@ class MainGUI(QWidget):
         self.shift_label = QLabel("Shifts:")
         self.shift_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.shift_label.setToolTip("This will run the model multiple times with a random .5 second shift. \nThis will multiply the splitting time by this number.")
+
+        
         cuda = False
         
         if torch.cuda.is_available():
@@ -254,33 +277,55 @@ class MainGUI(QWidget):
             self.gpu_checkbox.setChecked(True)
             self.gpu_checkbox.clicked.connect(self.check_cuda_devices)
             self.gpu_checkbox.setToolTip("Dramatically reduces split time, but uses a lot of GPU resources.")      
-
+        
         spinbox_layout = QHBoxLayout()
+        spinbox_layout.addWidget(self.overlap_label)
+        spinbox_layout.addWidget(self.overlap_slider)
+        spinbox_layout.addStretch(1)
         spinbox_layout.addWidget(self.shift_label)
         spinbox_layout.addWidget(self.shift_spinbox)
         self.stem_layout.addLayout(spinbox_layout)
         self.models_label = QLabel("Select Models:")
         self.models_label.setVisible(False)
-        self.stem_layout.addWidget(self.models_label)
-        self.stem_layout 
+        stems_box = QVBoxLayout()
+        stems_box.addWidget(self.models_label)
+        
+        
+
         self.model_checkboxes_layout = QHBoxLayout()
+        
         self.model_checkboxes_group = []
-        self.stem_layout.addLayout(self.model_checkboxes_layout)
+        self.model_group = QGroupBox(self.stem_box)
+        self.model_group.setObjectName('model')
+        self.model_group.setStyleSheet("myFrame { border: 2px solid #888; border-radius: 6px; background-color: transparent; }" )
+        
     
         if cuda:
             self.stem_layout.addWidget(self.gpu_checkbox)    
-       
-        self.stem_layout.addWidget(self.stem_file_button)
-        self.split_button.setEnabled(False)
-        self.stem_layout.addWidget(self.split_button)        
+        stems_box.addLayout(self.model_checkboxes_layout)
+        self.model_group.setLayout(stems_box)
+        self.stem_layout.addWidget(self.model_group)
+        self.btn_layout = QVBoxLayout()
+        
+        # Split stems buttons
+        self.split_button = QPushButton("Split Stems")
+        self.split_button.clicked.connect(self.split_stems)
+        self.stem_file_button = QPushButton("Select File")
+        self.stem_file_button.clicked.connect(self.select_file_location)
 
+        self.btn_layout.addWidget(self.stem_file_button)
+        self.split_button.setEnabled(False)
+        self.btn_layout.addWidget(self.split_button)    
+        self.stem_box.setLayout(self.stem_layout)    
+        self.right_side_total.addWidget(self.stem_box)
+        self.right_side_total.addLayout(self.btn_layout)
         self.left_widget = QWidget()
         self.left_widget.setMinimumWidth(300)
         self.left_widget.setMaximumHeight(500)
         self.left_widget.setLayout(self.horizontal_layout)        
         
         self.right_widget = QWidget()
-        self.right_widget.setLayout(self.stem_layout)
+        self.right_widget.setLayout(self.right_side_total)
         self.right_widget.setMinimumWidth(500)        
 
         self.side_by_side_layout.addWidget(self.left_widget)
@@ -310,7 +355,11 @@ class MainGUI(QWidget):
         self.main_layout.addLayout(self.progress_layout, 0)
         self.percent_done = 0
         self.setLayout(self.main_layout)
+        self.stem_box.repaint()
         self.current_shift = 1
+
+    def update_overlap_stem(self, value):
+        self.overlap_label.setText(f"Overlap {(value/100)*1.5:.2f} sec")
 
     # Checks if cuda is available and if so, opens a dialog to select which device you want to use
     def check_cuda_devices(self):
@@ -352,7 +401,7 @@ class MainGUI(QWidget):
                 self.model_checkboxes_layout.removeWidget(widget)
                 widget.deleteLater()
 
-
+        self.stem_box.repaint()
         if selected_instruments:
             for inst in selected_instruments:
                 models.append(set(self.instrument_dict[inst]))
@@ -363,6 +412,9 @@ class MainGUI(QWidget):
 
             if len(models) >= 1:
                 for model in models:
+                    if 'Guitar' not in selected_instruments and 'combo' in models:
+                        models.remove('combo')
+                        continue
                     model_checkbox = QCheckBox(model)
                    
                     model_checkbox.setChecked(previous_states.get(model, False))
@@ -370,7 +422,7 @@ class MainGUI(QWidget):
                     model_checkbox.setChecked(previous_states.get(model, False))
                     self.model_checkboxes_group.append(model_checkbox)
                     self.model_checkboxes_layout.addWidget(model_checkbox)
-
+            
         self.models_label.setVisible(any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
     
     
@@ -464,17 +516,7 @@ class MainGUI(QWidget):
 
     # Selects the save location for the split stems
     def select_save_location(self):
-        try:
-            cache_dir = self.config_params['cache']['last_file_path_downloader']
-        except:
-            if 'cache' not in self.config_params:
-                if 'user' not in self.config_params:
-                    self.config_params = {"cache":{
-                                                    "last_file_path_downloader": Path(__file__).parent.absolute(),
-                                                    "last_file_path_splitter": Path(__file__).parent.absolute(),
-                                                    "sources": []
-                },
-                                            "api_key": self.config_params['api_key']}
+        
         folder = QFileDialog.getExistingDirectory(self, "Select Download Folder", directory=self.config_params['cache']['last_file_path_downloader'])
         if folder:
             self.save_path = folder
@@ -579,7 +621,7 @@ class MainGUI(QWidget):
         info = self.get_models()
         self.shift_label.setVisible(True)
         if info is not None:
-            self.splitter = StemSplitter(info[0],sorted(info[1]), self.filepath, shifts=self.shift_spinbox.value(), keep_all=False)
+            self.splitter = StemSplitter(info[0],sorted(info[1]), self.filepath, shifts=self.shift_spinbox.value(), keep_all=False, overlap=float(self.overlap_slider.value()*1.5/100))
             self.splitter.progress.connect(self.update_progress)
             self.splitter.finished.connect(self.split_complete)
             
@@ -593,12 +635,12 @@ class MainGUI(QWidget):
     def download_complete(self,valid,  file_path: Path):
         file = str(file_path.absolute())
         if valid:
-            
-            ffmpg = subprocess.Popen(['ffmpeg', '-y', '-i', str(Path(file_path).with_suffix('.webm').absolute()), str(Path(file_path).with_suffix('.wav').absolute())])
-            ffmpg.wait()
-            file = str(file_path.absolute().with_suffix('.wav'))
-            if os.path.exists(file):
-                os.remove(Path(file).with_suffix('.webm'))
+            if file_path.suffix != '.wav':
+                ffmpg = subprocess.Popen(['ffmpeg', '-y', '-i', str(Path(file_path).with_suffix('.webm').absolute()), str(Path(file_path).with_suffix('.wav').absolute())])
+                ffmpg.wait()
+                file = str(file_path.absolute().with_suffix('.wav'))
+                if os.path.exists(file):
+                    os.remove(Path(file).with_suffix('.webm'))
             
             
             self.downloaded_song_box.reset(file)

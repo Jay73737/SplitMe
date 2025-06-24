@@ -223,9 +223,9 @@ class MainGUI(QWidget):
         
         # The different sources that can be separated
         self.stems_group = QGroupBox("Stems")
-   
+        self.stems_layout = QVBoxLayout()
         self.stems_group.setVisible(False)
-        
+        self.stems_group.setLayout(self.stems_layout)
         self.right_side_total.addWidget(self.split_stems_file)  
         self.right_side_total.addWidget(self.delete_original)
         self.right_side_total.addWidget(self.split_stems_file)        

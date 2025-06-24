@@ -63,13 +63,14 @@ class StemSplitter(QThread):
         self.shifts = shifts
         self.guitar_models=None
         if 'combo' in model:
+            print('comboooooooooooooooooooooooooooooooo')
             temp_model = model
             if 'mdx_extra' not in temp_model:
                 
                 temp_model.insert(0,'mdx_extra')
             temp_model.remove('combo')
             self.models = [Separator(m, shifts = shifts, split=True, overlap = overlap,progress=True) for m in temp_model]
-            self.guitar_model = Separator('htdemucs_6s', shifts=shifts, split=True, overlap=.75, progress=True)
+            self.guitar_models = Separator('htdemucs_6s', shifts=shifts, split=True, overlap=.75, progress=True)
             self.model_names = temp_model 
             if 'other' not in instruments:
                 instruments.append('other')
@@ -118,6 +119,125 @@ class StemSplitter(QThread):
     def split_stems(self, file_path=None):
         
         if file_path:
+            dir = Path(file_path).parent
+            if not dir.exists():
+                os.makedirs(dir, exist_ok=True)
+            files = os.listdir(file_path.parent)
+            
+        else:
+            return
+        file_name = Path(file_path).stem
+        self.stem_list = []
+        self.splitter_output = None
+        self.waiting = True
+        #import pdb; pdb.set_trace()
+        for i,m in enumerate(self.models):
+            if self.stems_exist(file_path, self.model_names[i]):
+                print(f"Stems already exist for model {self.model_names[i]}, skipping...")
+                continue
+            origin, stems = m.separate_audio_file(file_path)
+            items = []
+            print(type(stems))
+                    
+            for file,sources in stems.items():                
+                out_file = f"{file}.wav"               
+                
+                out_path = dir / file_name / out_file
+                os.makedirs(Path(out_path).parent, exist_ok=True)
+                if file in self.instruments:
+                    
+                    save_audio(sources, rf'{Path(out_path).absolute()}', m.samplerate, as_float=True)
+                    if 'other' in file and self.guitar_models is not None:
+                        other, guitar = self.guitar_models.separate_audio_file(out_path)
+                        #import pdb; pdb.set_trace()
+                        other_sources = guitar['other']
+                        guitar_source = guitar['guitar']
+                        
+                        out_path_guitar = dir / file_name / 'guitar.wav'
+                        print(out_path_guitar)
+                        save_audio(guitar_source, out_path_guitar, self.guitar_models.samplerate, as_float=True)
+                        save_audio(other_sources, Path(out_path.with_stem('other')), self.guitar_models.samplerate, as_float=True)
+                        
+                        print('saved guitar file ', out_path_guitar)
+                    print('saved ', file)
+                    continue
+                
+                
+                 
+            print(f"Stems saved in {dir}/{file_name}/")
+        
+            
+
+        self.timer.stop()
+        self.finished.emit(dir / file_name)
+
+
+class StemSplitterSingle():
+    
+
+    def __init__(self,model, instruments, file_path, shifts=1, keep_all=False, overlap=.5 ):
+        
+        sys.path.insert(0, Path(__file__).parent)
+        self.sources_list = ['guitar', 'bass', 'drums', 'vocals', 'other']
+        self.stem = None
+        self.shifts = shifts
+        self.guitar_models=None
+        if 'combo' in model:
+            temp_model = model
+            if 'mdx_extra' not in temp_model:
+                
+                temp_model.insert(0,'mdx_extra')
+            temp_model.remove('combo')
+            self.models = [Separator(m, shifts = shifts, split=True, overlap = overlap,progress=True) for m in temp_model]
+            self.guitar_models = Separator('htdemucs_6s', shifts=shifts, split=True, overlap=.75, progress=True)
+            self.model_names = temp_model 
+            if 'other' not in instruments:
+                instruments.append('other')
+        else:
+            self.models = [Separator(m, shifts = shifts, split=True, overlap = overlap,progress=True) for m in model]
+            self.model_names = model        
+        self.instruments = [inst.lower() for inst in sorted(instruments) if inst.lower()]        
+        self.file_path =Path(file_path)
+     
+
+        self.keep_all = keep_all
+        self.ext = Path(file_path).suffix
+        
+
+
+    def run(self):
+        return self.split_stems(self.file_path)
+    
+    
+
+    
+    def stems_exist(self, file_path, model):
+        
+        self.ext_out = 'wav'
+        file_path = Path(file_path)
+        file_name = file_path.name
+        dir = file_path.parent
+        print(f"Checking stems in directory: {dir}")
+        if not dir.is_dir():
+            return False
+        model_output_dir = dir / file_name
+        if not model_output_dir.is_dir():
+            return False
+        files = os.listdir(model_output_dir)
+        if not files:
+            return False
+        for file in files:
+            if Path(file).name not in self.instruments:
+                return False
+        return True
+
+
+    
+
+
+    def split_stems(self, file_path=None):
+        
+        if file_path:
             file_path = Path(file_path)
             print('fp', file_path)
             file_name = file_path.stem
@@ -131,8 +251,9 @@ class StemSplitter(QThread):
                 os.makedirs(dir, exist_ok=True)
             files = os.listdir(file_path.parent)
             
-        else:
-            return
+        
+            
+            
 
         self.stem_list = []
         self.splitter_output = None
@@ -153,16 +274,16 @@ class StemSplitter(QThread):
                 if file in self.instruments:
                     
                     save_audio(sources, rf'{out_path.absolute()}', m.samplerate, as_float=True)
-                    if 'other' in file and self.guitar_model is not None:
-                        other, guitar = self.guitar_model.separate_audio_file(out_path)
+                    if 'other' in file and self.guitar_models is not None:
+                        other, guitar = self.guitar_models.separate_audio_file(out_path)
                         #import pdb; pdb.set_trace()
                         other_sources = guitar['other']
                         guitar_source = guitar['guitar']
                         
                         out_path_guitar = dir / file_name / 'guitar.wav'
                         print(out_path_guitar)
-                        save_audio(guitar_source, out_path_guitar, self.guitar_model.samplerate, as_float=True)
-                        save_audio(other_sources, Path(out_path.with_stem('other')), self.guitar_model.samplerate, as_float=True)
+                        save_audio(guitar_source, out_path_guitar, self.guitar_models.samplerate, as_float=True)
+                        save_audio(other_sources, Path(out_path.with_stem('other')), self.guitar_models.samplerate, as_float=True)
                         
                         print('saved guitar file ', out_path_guitar)
                     print('saved ', file)
@@ -174,8 +295,8 @@ class StemSplitter(QThread):
         
             
 
-        self.timer.stop()
-        self.finished.emit(dir / file_name)
+        
+        return dir / file_name
 
        
     # Combines the outputs of the stems, not sure whether this helps or not, but keeping it for potential future use
