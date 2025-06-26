@@ -80,7 +80,7 @@ class StemSplitter(QThread):
         self.instruments = [inst.lower() for inst in sorted(instruments) if inst.lower()]        
         self.file_path =Path(file_path)
         self.timer = QTimer()
-        self.timer.timeout.connect(self.get_progress_hook)
+        self.timer.timeout.connect(self._get_progress_hook)
         self.timer.start(250)
 
         self.keep_all = keep_all
@@ -89,13 +89,13 @@ class StemSplitter(QThread):
 
 
     def run(self):
-        self.split_stems(self.file_path)
+        self._split_stems(self.file_path)
     
-    def get_progress_hook(self):
+    def _get_progress_hook(self):
         self.progress.emit("good ",int(get_progress()))
 
     
-    def stems_exist(self, file_path, model):
+    def _stems_exist(self, file_path, model):
         
         self.ext_out = 'wav'
         file_path = Path(file_path)
@@ -116,7 +116,7 @@ class StemSplitter(QThread):
         return True
 
 
-    def split_stems(self, file_path=None):
+    def _split_stems(self, file_path=None):
         
         if file_path:
             dir = Path(file_path).parent
@@ -132,7 +132,7 @@ class StemSplitter(QThread):
         self.waiting = True
         #import pdb; pdb.set_trace()
         for i,m in enumerate(self.models):
-            if self.stems_exist(file_path, self.model_names[i]):
+            if self._stems_exist(file_path, self.model_names[i]):
                 print(f"Stems already exist for model {self.model_names[i]}, skipping...")
                 continue
             origin, stems = m.separate_audio_file(file_path)
@@ -206,12 +206,12 @@ class StemSplitterSingle():
 
 
     def run(self):
-        return self.split_stems(self.file_path)
+        return self._split_stems(self.file_path)
     
     
 
     
-    def stems_exist(self, file_path, model):
+    def _stems_exist(self, file_path, model):
         
         self.ext_out = 'wav'
         file_path = Path(file_path)
@@ -235,7 +235,7 @@ class StemSplitterSingle():
     
 
 
-    def split_stems(self, file_path=None):
+    def _split_stems(self, file_path=None):
         
         if file_path:
             file_path = Path(file_path)
@@ -259,7 +259,7 @@ class StemSplitterSingle():
         self.splitter_output = None
         self.waiting = True
         for i,m in enumerate(self.models):
-            if self.stems_exist(file_path, self.model_names[i]):
+            if self._stems_exist(file_path, self.model_names[i]):
                 print(f"Stems already exist for model {self.model_names[i]}, skipping...")
                 continue
             origin, stems = m.separate_audio_file(file_path)
@@ -300,7 +300,7 @@ class StemSplitterSingle():
 
        
     # Combines the outputs of the stems, not sure whether this helps or not, but keeping it for potential future use
-    def combine_outputs(self, files, output_path, different_instruments=None):
+    def _combine_outputs(self, files, output_path, different_instruments=None):
         if different_instruments:
             combining = len(different_instruments)
             sound_list = []

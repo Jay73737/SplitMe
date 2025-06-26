@@ -7,12 +7,14 @@ from contextvars import ContextVar
 
 import re
 _ffmpeg_location = ContextVar('ffmpeg_location', default=None)
+_ffmpeg_location = ContextVar('ffmpeg_location', default=None)
+ffmpeg_path = Path(__file__).parent / 'ffmpeg' 
 
 eval = None
-_ffmpeg_location.set('ffmpeg')
+_ffmpeg_location.set(ffmpeg_path.absolute())
 
-ffmpeg_path = os.path.abspath('ffmpeg')
-os.environ["PATH"] += os.pathsep + ffmpeg_path
+
+os.environ["PATH"] += os.pathsep + str(ffmpeg_path.absolute())
 #url = 'https://www.youtube.com/watch?v=x4SsfuOolkU'
 
 
@@ -32,13 +34,14 @@ class DownloadThread(QThread):
         self.save_path = save_path
         self.service = None
         self.downloaded_filename = ""
-        self.ffmpeg_path = os.path.abspath('ffmpeg')
-        os.environ["PATH"] += os.pathsep + self.ffmpeg_path
+        self.ffmpeg_path =  Path('ffmpeg\\ffmpeg.exe').absolute()
+       
+        os.environ["PATH"] += os.pathsep + str(self.ffmpeg_path)
 
     def run(self):   
         
         ydl_opts = {
-            'ffmpeg_location':fr'{self.ffmpeg_path}',
+            'ffmpeg_location':f'{str(ffmpeg_path.absolute())}',
             'format': 'bestaudio/best[ext=webm]',
             'outtmpl': f"{self.save_path}\\tempfile.tmp",
             

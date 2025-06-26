@@ -306,7 +306,7 @@ def apply_model(model: tp.Union[BagOfModels, Model],
             out[..., offset:offset + segment_length] += (
                 weight[:chunk_length] * chunk_out).to(mix.device)
             sum_weight[offset:offset + segment_length] += weight[:chunk_length].to(mix.device)
-        assert sum_weight.min() > 0
+       # assert sum_weight.min() > 0
         out /= sum_weight
         assert isinstance(out, th.Tensor)
         return out

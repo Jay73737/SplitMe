@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
       QSpinBox, QSizePolicy, QGroupBox, QSlider
 )
 from PyQt6.QtGui import QIcon, QDesktopServices
-from PyQt6.QtCore import Qt, QUrl
+from PyQt6.QtCore import Qt, QUrl, QTimer
 from YoutubeDownloader import YoutubeDownloader
 from Downloader import DownloadThread
 from StemSplitter import StemSplitter
@@ -25,7 +25,7 @@ import traceback
 _ffmpeg_location = ContextVar('ffmpeg_location', default=None)
 
 
-_ffmpeg_location.set('ffmpeg')
+_ffmpeg_location.set('ffmpeg\\ffmpeg.exe')
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), ".")))
 
 import torch
@@ -39,7 +39,11 @@ class MainGUI(QWidget):
         super().__init__()
         self.url_download = None
         self.sources = ['vocals', 'bass', 'drums', 'other', 'guitar', 'piano']
-        
+        self.current_shift = 1
+        self.armed = False
+        self.selected_instruments = []
+        self.dots = 0
+
         
         
         self.instrument_dict = {
@@ -54,7 +58,7 @@ class MainGUI(QWidget):
         last_file_splitter = None
         self.config_params= {}
         try:
-            self.load_config('config.json')
+            self._load_config('config.json')
         except:
             self.config_params = {
                 "api_key": "",
@@ -86,13 +90,18 @@ class MainGUI(QWidget):
         except:
             traceback.print_exc()
             api_window = APIKeyWindow(self)
-
-            api_window.finished.connect(self.config_writer)
+            self._load_config('config')
+            api_window.finished.connect(self._save_api)
             api_window.show()
             result = api_window.exec()
-        self.setup_ui()
+        self._setup_ui()
 
-    def load_config(self, path):
+    def _save_api(self, api_key):
+        self._load_config('config.json')
+        self.config_params['api_key'] = api_key
+        self._save_config('config.json', self.config_params)
+
+    def _load_config(self, path):
         if os.path.exists(path):
             with open(path, "r") as f:
                 self.config_params = json.load(f)
@@ -108,7 +117,7 @@ class MainGUI(QWidget):
             }
             return self.config_params
 
-    def save_config(path, config):
+    def _save_config(path, config):
         with open(path, "w") as f:
             json.dump(config, f, indent=4)
 
@@ -118,7 +127,7 @@ class MainGUI(QWidget):
     # param is the parameter to update (api_key, cache)
     # value is the value you want to set it to
     @staticmethod
-    def write_config(class_var,param,value):
+    def _write_config(class_var,param,value):
         
         try:
             temp = None
@@ -147,16 +156,22 @@ class MainGUI(QWidget):
                     json.dump(temp, f)
                     class_var.config_params = temp
 
+    def _inc_dots(self):
+        self.dots += 1
 
     # Setus up main UI layout
-    def setup_ui(self):
+    def _setup_ui(self):
 
         self.setWindowTitle("Stem Splitter")
         self.setGeometry(200, 400, 600, 350)
         self.main_layout = QVBoxLayout()
         self.side_by_side_layout = QHBoxLayout()
         self.horizontal_layout = QVBoxLayout()       
-
+        
+        self.stems_folder = ""
+        self.string_timer = QTimer(self)
+        self.string_timer.start(100)
+        self.string_timer.timeout.connect(self._inc_dots)
         # Youtube API checkbox     
         self.platform_yt = QCheckBox("Use YouTube API?", self)
         self.platform_yt.setChecked(True)
@@ -165,11 +180,11 @@ class MainGUI(QWidget):
         ## Yoube URL/Search text box and label and search button
         self.url_label = QLabel("URL/Search:")
         self.url_input = QLineEdit(self)
-        self.url_input.returnPressed.connect(self.search_youtube)
+        self.url_input.returnPressed.connect(self._search_youtube)
         self.link_layout = QVBoxLayout()
         self.link_layout = QVBoxLayout()
         self.search_button = QPushButton("Search")
-        self.search_button.clicked.connect(self.search_youtube)
+        self.search_button.clicked.connect(self._search_youtube)
         self.link_layout.addWidget(self.search_button)
         self.link_layout.addWidget(self.search_button)
 
@@ -185,9 +200,9 @@ class MainGUI(QWidget):
 
         # Select Save location, and download buttons
         self.save_button = QPushButton("Select Save Location")
-        self.save_button.clicked.connect(self.select_save_location)
+        self.save_button.clicked.connect(self._select_save_location)
         self.download_button = QPushButton("Download")
-        self.download_button.clicked.connect(self.download_video)
+        self.download_button.clicked.connect(self._download_video)
         self.save_path = Path(__file__).parent.absolute()
         self.save_label = QLabel(
             f"Save Location: {self.save_path}"
@@ -247,18 +262,18 @@ class MainGUI(QWidget):
         for label in checkbox_labels:
             checkbox = QCheckBox(label)
             checkbox.setChecked(False)
-            checkbox.stateChanged.connect(self.on_checkbox_state_changed)
+            checkbox.stateChanged.connect(self._on_checkbox_state_changed)
             self.split_stems_checkbox_group.append(checkbox)
             self.checkbox_layout.addWidget(checkbox)
         self.right_side_total.addLayout(self.checkbox_layout)
-        self.overlap_label = QLabel(f"Overlap {50*1.5/100:.2f} sec")
+        self.overlap_label = QLabel(f"Overlap {(50/100):.2f} sec ({((50/100)*44100)} steps)")
         self.overlap_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.overlap_label.setToolTip('Changes how much the segments of the track overlap when recombining. Higher values take longer but improve overall quality.')
         self.overlap_slider = QSlider(Qt.Orientation.Horizontal, self)
         self.overlap_slider.setFixedWidth(100)
         self.overlap_slider.setRange(0, 100)
         self.overlap_slider.setValue(50)
-        self.overlap_slider.valueChanged.connect(self.update_overlap_stem)
+        self.overlap_slider.valueChanged.connect(self._update_overlap_stem)
         self.overlap_slider.setToolTip('Changes how much the segments of the track overlap when recombining. Higher values take longer but improve overall quality.')
         self.shift_spinbox = QSpinBox(self)
         self.shift_spinbox.setRange(1, 20)
@@ -275,7 +290,7 @@ class MainGUI(QWidget):
             cuda = True
             self.gpu_checkbox = QCheckBox(f"Use GPU {torch.cuda.get_device_name(0)}", self)
             self.gpu_checkbox.setChecked(True)
-            self.gpu_checkbox.clicked.connect(self.check_cuda_devices)
+            self.gpu_checkbox.clicked.connect(self._check_cuda_devices)
             self.gpu_checkbox.setToolTip("Dramatically reduces split time, but uses a lot of GPU resources.")      
         
         spinbox_layout = QHBoxLayout()
@@ -309,9 +324,9 @@ class MainGUI(QWidget):
         
         # Split stems buttons
         self.split_button = QPushButton("Split Stems")
-        self.split_button.clicked.connect(self.split_stems)
+        self.split_button.clicked.connect(self._split_stems)
         self.stem_file_button = QPushButton("Select File")
-        self.stem_file_button.clicked.connect(self.select_file_location)
+        self.stem_file_button.clicked.connect(self._select_file_location)
 
         self.btn_layout.addWidget(self.stem_file_button)
         self.split_button.setEnabled(False)
@@ -331,9 +346,11 @@ class MainGUI(QWidget):
         self.side_by_side_layout.addWidget(self.left_widget)
         self.side_by_side_layout.addWidget(self.vertical_divider)
         self.side_by_side_layout.addWidget(self.right_widget)      
+        self.working_label = QLabel("Working")
         
+        self.working_label.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.last_percent_done = 0
-        self.progress_label = QLabel("")
+
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
@@ -341,14 +358,20 @@ class MainGUI(QWidget):
         self.progress_bar.hide()
         
         self.progress_layout = QVBoxLayout()
-        self.split_progress_label = QLabel(f"Shift 1/{self.shift_spinbox.value()}")
-        self.split_progress_label.setVisible(False)
+        
+        self.progress_label = QLabel(f"Shift 1/{self.shift_spinbox.value()}")
+        self.progress_label.setVisible(False)
+        self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         split_progress_layout = QHBoxLayout()
-        split_progress_layout.addWidget(self.split_progress_label)
+        self.progress_layout.addWidget(self.working_label)
+        split_progress_layout.addWidget(self.progress_label)
         self.progress_layout.addLayout(self.side_by_side_layout)
         split_progress_layout.addWidget(self.progress_bar)
+       
+   
+ 
         
-        self.progress_layout.addWidget(self.progress_label)
+
         self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.progress_layout.addLayout(split_progress_layout)        
 
@@ -356,13 +379,12 @@ class MainGUI(QWidget):
         self.percent_done = 0
         self.setLayout(self.main_layout)
         self.stem_box.repaint()
-        self.current_shift = 1
-
-    def update_overlap_stem(self, value):
-        self.overlap_label.setText(f"Overlap {(value/100)*1.5:.2f} sec")
+        
+    def _update_overlap_stem(self, value):
+        self.overlap_label.setText(f"Overlap {(value/100):.2f} sec ({str(int((value/100)*44100))} steps)")
 
     # Checks if cuda is available and if so, opens a dialog to select which device you want to use
-    def check_cuda_devices(self):
+    def _check_cuda_devices(self):
         if self.gpu_checkbox.isChecked():
             if torch.cuda.is_available():
                 if torch.cuda.device_count() > 1:
@@ -379,7 +401,7 @@ class MainGUI(QWidget):
             QMessageBox.information(self, "GPU Disabled", "The GPU will not be used for processing.")
 
     # When a stem checkbox is clicked, this updates the models that are available for those stems (eg. guitar and piano are only on htdemucs_6s)
-    def on_checkbox_state_changed(self):
+    def _on_checkbox_state_changed(self):
    
         previous_states = {checkbox.text(): checkbox.isChecked() for checkbox in self.model_checkboxes_group}
 
@@ -387,7 +409,7 @@ class MainGUI(QWidget):
         
 
         self.split_button.setEnabled(self.filepath != "" and any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
-        selected_instruments = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
+        self.selected_instruments = [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
         models = []
         self.model_checkboxes_group = []
 
@@ -402,8 +424,8 @@ class MainGUI(QWidget):
                 widget.deleteLater()
 
         self.stem_box.repaint()
-        if selected_instruments:
-            for inst in selected_instruments:
+        if self.selected_instruments:
+            for inst in self.selected_instruments:
                 models.append(set(self.instrument_dict[inst]))
 
             models = sorted(list(set.intersection(*models)))
@@ -412,7 +434,7 @@ class MainGUI(QWidget):
 
             if len(models) >= 1:
                 for model in models:
-                    if 'Guitar' not in selected_instruments and 'combo' in models:
+                    if 'Guitar' not in self.selected_instruments and 'combo' in models:
                         models.remove('combo')
                         continue
                     model_checkbox = QCheckBox(model)
@@ -434,14 +456,14 @@ class MainGUI(QWidget):
         
     # Result returned from the youtube api search are sent here.
 
-    def set_url(self, input_dict):
+    def _set_url(self, input_dict):
     
         self.results_window = ResultsWindow(input_dict, self)
-        self.results_window.finished.connect(self.on_link_clicked)
+        self.results_window.finished.connect(self._on_link_clicked)
         self.results_window.exec()
 
     # Sets the text in the text input to the url of the youtube video
-    def on_link_clicked(self, url):
+    def _on_link_clicked(self, url):
         self.url_download = url
         self.url_input.setText(url)
         if 'playlist' in url:
@@ -464,7 +486,7 @@ class MainGUI(QWidget):
 
           
     # Displays an error and hides progress bar.
-    def show_error(self, error):
+    def _show_error(self, error):
         error_message = f"Error: {error}"
         QMessageBox.critical(self, "Error", error_message)
         self.progress_bar.hide()
@@ -473,18 +495,18 @@ class MainGUI(QWidget):
       
 
     # Searches for the URL through the youtube API.  Must have an api_key in the config.json storage file in the root directory (this should be created automatically)
-    def search_youtube(self):
+    def _search_youtube(self):
         if self.platform_yt.isChecked():
             self.ys = YoutubeDownloader(self.url_input.text(), self.config_params)
             
-            self.ys.finished.connect(self.set_url)
-            self.ys.error.connect(self.show_error)
+            self.ys.finished.connect(self._set_url)
+            self.ys.error.connect(self._show_error)
             self.ys.start()
         
         
         
     # Toggles the progress bar on and off
-    def toggle_loading(self):
+    def _toggle_loading(self):
         if self.progress_bar.isVisible():
             self.progress_bar.hide()
         else:
@@ -492,7 +514,7 @@ class MainGUI(QWidget):
             
     # Sets the file location of the splitter to an audio file specified by file_location.
     # Enables/Disables the Split Stems button based on if all of the required selections are made.
-    def select_file_location(self, file_location = None):
+    def _select_file_location(self, file_location = None):
         if file_location:
             self.filepath = file_location
             if ' ' in self.filepath:
@@ -507,7 +529,7 @@ class MainGUI(QWidget):
                 self.filepath = file
                 self.split_stems_file.setText(f"Loaded File: {file}")
                 self.config_params['cache']["last_file_path_splitter"] = file
-                MainGUI.write_config(self,"last_file_path_splitter",self.config_params['cache']["last_file_path_splitter"])
+                MainGUI._write_config(self,"last_file_path_splitter",self.config_params['cache']["last_file_path_splitter"])
                 
             
             self.split_button.setEnabled(self.filepath != "" and any(checkbox.isChecked() for checkbox in self.split_stems_checkbox_group))
@@ -515,19 +537,19 @@ class MainGUI(QWidget):
 
 
     # Selects the save location for the split stems
-    def select_save_location(self):
+    def _select_save_location(self):
         
         folder = QFileDialog.getExistingDirectory(self, "Select Download Folder", directory=self.config_params['cache']['last_file_path_downloader'])
         if folder:
             self.save_path = folder
             self.save_label.setText(f"Save Location: {folder}")
             self.config_params['cache']['last_file_path_downloader'] = self.save_path
-            MainGUI.write_config(self,'last_file_path_downloader',self.config_params['cache']['last_file_path_downloader'])
+            MainGUI._write_config(self,'last_file_path_downloader',self.config_params['cache']['last_file_path_downloader'])
 
 
   
     # Creates the download thread to download the video.
-    def download_video(self):
+    def _download_video(self):
         self.progress_bar.show()
         url = self.url_download
         format_selected = self.format_dropdown.currentText().split(" - ")[1].lower()
@@ -539,7 +561,7 @@ class MainGUI(QWidget):
         
               
         self.download_thread = DownloadThread(url=url, save_path=self.save_path)
-        self.download_thread.finished_signal.connect(self.download_complete)   
+        self.download_thread.finished_signal.connect(self._download_complete)   
         
         
         self.download_thread.start()
@@ -547,7 +569,7 @@ class MainGUI(QWidget):
     
      
     # Gets the models selected by the checkboxes for splitting
-    def get_models(self):
+    def _get_models(self):
 
         selected_models = [checkbox.text() for checkbox in self.model_checkboxes_group if checkbox.isChecked()]
         if not selected_models:
@@ -559,7 +581,7 @@ class MainGUI(QWidget):
             return
         return (selected_models, stem_types)
         
-    def is_file_in_use(filepath):
+    def _is_file_in_use(filepath):
         for proc in psutil.process_iter(['open_files']):
             for file in proc.info['open_files'] or []:
                 if file.path == filepath:
@@ -567,7 +589,7 @@ class MainGUI(QWidget):
         return False
 
     # Runs when the split is complete, calls update_stems_display which is for displaying/playing the split audio files
-    def split_complete(self, message):        
+    def _split_complete(self, message):        
         self.progress_label.setText("Splitting complete!")
         self.progress_bar.hide()
         self.current_shift = 1
@@ -585,22 +607,56 @@ class MainGUI(QWidget):
 
         if self.filepath:
             stems_folder = Path(message)
-            self.update_stems_display(stems_folder)
-            
+            self._update_stems_display(stems_folder)
+    
 
+    def _calculate_shifts(self, models, sources):
+        if models:
+            model_shift_dict = {
+                'model':{
+                    'demucs': 1,
+                    'hdemucs': 1,
+                    'htdemucs': 1,
+                    'mdx': 4,
+                    'htdemucs_ft': 4,
+                    'mdx_extra':4,
+                    'htdemucs_6s': 1,
+                    'combo': 5
+                    
+                }
+            }
+            total = 0
+            src_num = len(sources)
+            for m in models[0]:
+                total += model_shift_dict['model'][m] 
+            return total * self.shift_spinbox.value()
+        return None
+    
+    
+
+    def _working_string(self):
+        out = "Working" + str("." * (self.dots % 4))
+        return out
+
+    def _get_selected_instruments(self):
+        return [checkbox.text() for checkbox in self.split_stems_checkbox_group if checkbox.isChecked()]
     # Progress for stem splitting
-    def update_progress(self, message, percent_done=None):
-        percentage = 0
-        if percent_done > percentage:       
-            percentage = percent_done      
-        if percent_done >= 98:
-            self.current_shift += 1
+    def _update_progress(self, message, percent_done=None):
         
-        self.progress_label.setText(f"{str(percentage)}% || Shift {self.current_shift}/{self.shift_spinbox.value()}")
-        self.progress_bar.setValue(int(percentage))   
+        if percent_done > 90 and not self.armed:
+            self.armed = True
+        if self.armed and percent_done <= 90:
+            self.current_shift += 1
+            self.armed = False
+
+
+        self.progress_label.setText(f"{self._working_string()}\n                               {str(percent_done)}% || Pass {self.current_shift}/{str(self.shfts)}                            ")
+        self.progress_bar.setValue(int(percent_done))   
 
     # Called when the Split button is pressed, creates as new thread to split stems
-    def split_stems(self):
+    def _split_stems(self):
+       
+        self.shfts = self._calculate_shifts(self._get_models(),self._get_selected_instruments()) * int(self.shift_spinbox.value())
         self.downloaded_song_box.reset("")
         self.downloaded_song_box.setVisible(True)
         if not self.filepath:
@@ -618,12 +674,12 @@ class MainGUI(QWidget):
         else:
             QMessageBox.warning(self, "Error", "Please select at least one model to split the stems.")
             return
-        info = self.get_models()
+        info = self._get_models()
         self.shift_label.setVisible(True)
         if info is not None:
             self.splitter = StemSplitter(info[0],sorted(info[1]), self.filepath, shifts=self.shift_spinbox.value(), keep_all=False, overlap=float(self.overlap_slider.value()*1.5/100))
-            self.splitter.progress.connect(self.update_progress)
-            self.splitter.finished.connect(self.split_complete)
+            self.splitter.progress.connect(self._update_progress)
+            self.splitter.finished.connect(self._split_complete)
             
             self.splitter.start()            
             self.progress_bar.show()
@@ -632,7 +688,7 @@ class MainGUI(QWidget):
 
     
     # Runs when the download is finished.  Converts the .webm file to a .wav file with ffmpeg, then sets the downloaded song box to the downloaded file
-    def download_complete(self,valid,  file_path: Path):
+    def _download_complete(self,valid,  file_path: Path):
         file = str(file_path.absolute())
         if valid:
             if file_path.suffix != '.wav':
@@ -646,7 +702,7 @@ class MainGUI(QWidget):
             self.downloaded_song_box.reset(file)
             self.downloaded_song_box.file_path = file
             self.downloaded_song_box.setVisible(True)
-            self.select_file_location(file)
+            self._select_file_location(file)
             self.save_label.setText(f"Save Location: {file}")
             self.filepath = file
             self.split_stems_file.setText(f"Loaded File: {file}")
@@ -656,14 +712,17 @@ class MainGUI(QWidget):
             print('didnt get a valid file back from downloader')
             raise FileNotFoundError()
 
+    
+    
     # This updates the draggable stem boxes that are displayed after the stems are split.    
-    def update_stems_display(self, stems_folder: Path):
+    def _update_stems_display(self, stems_folder: Path):
+        self.stems_folder = stems_folder
         for i in reversed(range(self.stems_layout.count())):
             widget = self.stems_layout.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
 
-        if stems_folder.is_dir():
+        if Path(stems_folder).is_dir():
             
             folder_button = QPushButton()
             folder_button.setIcon(folder_button.style().standardIcon(QStyle.StandardPixmap.SP_DirOpenIcon)) 
@@ -672,7 +731,7 @@ class MainGUI(QWidget):
             self.stems_layout.addWidget(folder_button)
 
             # Add stem files
-            t_file = [file for file in stems_folder.iterdir() if file.is_file()]
+            t_file = [Path(file) for file in Path(stems_folder).iterdir() if Path(file).is_file()]
             for fname in t_file:
                 stem_box = DraggableStemLabel(str(fname.name), fname.absolute())
                 self.stems_layout.addWidget(stem_box)

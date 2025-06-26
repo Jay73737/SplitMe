@@ -92,7 +92,7 @@ class Mixer(QThread):
 
 audio1, sr1 = sf.read(r'C:\Users\justm\Desktop\SplitIt\SplitMe\SplitMe\Eagles - Hotel California (Official Audio)\Eagles - Hotel California\guitar.wav')
 audio2, sr2 = sf.read(r'C:\Users\justm\Desktop\SplitIt\other_average\guitar.wav')
-other, sro = sf.read(r'C:\Users\justm\Desktop\SplitIt\SplitMe\SplitMe\Eagles - Hotel California (Official Audio)\Eagles - Hotel California\other.wav')
+other, sro = sf.read(r"C:\Users\justm\Desktop\SplitIt\SplitMe\SplitMe\Guns N' Roses - Sweet Child O' Mine (Official Music Video)\Guns N' Roses - Sweet Child O' Mine (Official Music Video)\other.wav")
 othermax_val = np.max(np.abs(other)) + .02
 audio2 *= 2
 other /= othermax_val
