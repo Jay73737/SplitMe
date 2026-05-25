@@ -3,40 +3,30 @@
 **/__pycache__/
 **/__pycahce__/
 /config.json
-/ui/config.json
+**/__pycahce__/
 *.wav
 /ffmpeg/
 /SplitMe/
 /_demucs/__pycache__/
-
-# Virtual environments
-/.venv/
-/.venv-linux/
-
-# Backend freeze artifacts
-/backend/build/
-/backend/dist/
-/backend/build-venv-*/
-
-# Frontend / electron-builder artifacts
-/frontend/dist/
-/frontend/release/
-/frontend/resources/
-/frontend/.parcel-cache/
-/frontend/node_modules/
-
-# Secrets / keys - NEVER commit
-bigkey
-bigkey*
-*.pem
-*.key
-id_rsa
-id_ed25519
-yt_cookies.txt
-*.txt.bak
-
-# Audio output (Ableton analysis sidecars; *.wav already ignored above)
-*.asd
-
-# Stray nested project copy at repo root (not the source tree)
-/SplitIT/
+.claude
+.venv
+.gitignore
+dist/
+frontend/dist/
+data/
+release/WWD
+build/
+frontend/build/
+frontend/node_modules/
+tmp_stems/
+tmp_stems_silence/
+frontend/electron-dev-run.log
+backend-run.log
+frontend/electron-dev-run.log
+frontend/electron-dev-run.log
+backend-run.log
+splitme-launch.log
+backend-run.log
+electron-dev-run.log
+splitme-launch.log
+frontend/electron-dev-run.log

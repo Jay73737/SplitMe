@@ -1,157 +1,238 @@
-﻿# SplitMe
+# 🎵 SplitMe - AI Audio Stem Separation
 
-SplitMe is a Python tool for separating audio stems (vocals, drums, bass, guitar, piano, other) from media files using [Demucs](https://github.com/facebookresearch/demucs). It can also automatically download audio and videos using [yt_dlp](https://github.com/yt-dlp/yt-dlp) from various [web pages](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), extract the audio, and perform stem separation.  
+**Transform any song into separate instrument tracks instantly!**
 
-## Features
+SplitMe uses advanced AI (Facebook's Demucs) to split songs into individual tracks like vocals, drums, bass, and other instruments. Perfect for remixers, producers, musicians, and music enthusiasts.
 
-- Audio stem separation using Demucs (supports multiple models)
-- Download videos/audio from URLs
-- Search for videos on youtube through the api for download.
-- Automatically converts and prepares audio files for separation
-- Outputs cleanly separated stems into organized folders
+## ✨ Features
 
-## Requirements
+- **AI-Powered Separation**: Split songs into vocals, drums, bass, piano, guitar, and more
+- **Multiple AI Models**: Choose from different Demucs models for best results
+- **YouTube Integration**: Download and process audio from YouTube and other sites
+- **Batch Processing**: Process multiple songs at once
+- **High Quality Output**: Maintains audio quality during separation
+- **Cross-Platform**: Works on Windows, Mac, and Linux
 
-######################################################## Beta Feature ######################################################################
-Most of the requirements should be installed by the powershell install script included in the Repo. There are 2 separate powershell scripts in there (.ps1 files).  If you have an nVidia GPU with CUDA cores (2000 series +) and want to utilize them for stem separation, use the download_gpu.ps1 file.  Otherwise, use the download_nogpu.ps1 file.  
+## 🚀 Quick Start
 
-These scripts will download and install:
-   - python 3.9.13
-   - ffmpeg
-   - Git
-   - CUDA toolkit
-######################################################### Beta Feature #####################################################################
+### 🪟 For Windows Users
 
-## Installation
+**Super Easy - One Click Setup:**
 
-The above script is still in development.  To install this library you will need:
-   - [python 3.9.13](https://www.python.org/downloads/release/python-3913/)
-   - [ffmpeg](https://ffmpeg.org/download.html) 
-   - [Git](https://git-scm.com/downloads)
-   - [CUDA toolkit 12.1](https://developer.nvidia.com/cuda-12-1-0-download-archive)
+1. **Double-click**: `SplitMe-Launcher-Windows.bat`
+2. **That's it!** The modern PowerShell launcher will automatically:
+   - Check system requirements and Python installation
+   - Create and manage Python virtual environments
+   - Install all dependencies with progress tracking
+   - Handle Node.js detection for GUI vs API-only mode
+   - Start both backend and frontend with proper error handling
+   - Provide real-time status updates and health checks
 
-Install python and add python to the global PATH variable.
+**Advanced Options:**
+- **PowerShell directly**: `.\SplitMe-Launcher-Windows.ps1`
+- **API-only mode**: `.\SplitMe-Launcher-Windows.ps1 -ApiOnly`
+- **Verbose output**: `.\SplitMe-Launcher-Windows.ps1 -Verbose`
+- **System check**: `setup.bat` or `.\setup-windows.ps1`
 
-Then you can go ahead and install Git and the CUDA toolkit normally.
+**First time setup** may take a few minutes to download dependencies.
 
-Next would be getting ffmpeg downloaded.  Open the .zip file you download from ffmpeg and navigate to the bin directory inside and extract "ffmpeg.exe" and "ffprobe.exe" to a folder somewhere on your pc.  Copy the folder path, and add this to the system environment PATH variables and save it.
+### 🍎 For Mac Users
 
-You may need to restart your PC after installing all of this.
+**Two options available:**
 
-The next step is cloning this repo onto your pc.  This can be done with the following command:
-```powershell
-git clone https://github.com/Jay73737/SplitMe.git
-```
-After this, you will need to install the requirements.txt file by changing your current directory to the SplitMe root folder (the only containing main.py and requirements.txt).  This can be done with:
-```powershell
-pip install -r requirements.txt
-pip uninstall torch torchaudio yt_dlp soundfile demucs
-pip install torch torchaudio yt_dlp soundfile demucs
+**Option 1: Pre-built Executables (Fastest)**
+```bash
+# Just run the launcher - uses optimized Mac binaries
+./SplitMe-Launcher.sh
 ```
 
-You may want to run this in a venv in order to have a clean python environment to work with:
-```powershell
-python -m venv SplitMe
+**Option 2: From Source (Auto-setup)**
+If executables aren't available, the launcher automatically falls back to source mode and will:
+- Set up Python environment
+- Install dependencies  
+- Start from source code
+
+### 🐧 For Linux Users
+
+```bash
+# Make setup script executable and run
+chmod +x setup.sh
+./setup.sh
+
+# Then launch the application
+./SplitMe-Launcher.sh
 ```
 
+## 📋 Requirements
 
+**The launchers handle everything automatically, but if you want to install manually:**
 
-If you want to use the Youtube API to gather the links for downloading (if not you can just paste urls into the search box), follow these steps first:
+**Essential:**
+- Python 3.9+ 
+- pip (comes with Python)
 
-   1. Activate your Youtube Data API key in Google by navigating [here](https://console.developers.google.com/) then clicking on the Library tab:![alt text](image.png).
+**For GUI (optional):**
+- Node.js 16+ (for the Electron frontend)
 
-   2. Activate the Youtube Data API v3: ![alt text](image-1.png)
+**Without Node.js**, SplitMe runs in API-only mode with a web interface at `http://localhost:8000`
 
-   3. Go to Enabled APIs & services and click Create credentials, then API key:![alt text](image-3.png)
+## 🎯 How to Use
 
-   4. Then click Show key and copy the API key value.
+1. **Launch the Application**: Use the launcher scripts above
+2. **Add Audio Sources**:
+   - Drag and drop audio files
+   - Paste YouTube URLs
+   - Use the YouTube search feature
+3. **Choose AI Model**: Select the separation model that works best for your music
+4. **Start Separation**: Click process and wait for the AI to work its magic
+5. **Download Results**: Get your separated tracks organized in folders
 
-   5. You will be asked for this the first time you start the program.
+## 📁 What You Get
 
+After processing, you'll receive separate audio files for:
 
+- 🎤 **Vocals** - Clean vocal track
+- 🥁 **Drums** - Drum track only  
+- 🎸 **Bass** - Bass line isolated
+- 🎹 **Other** - Remaining instruments (piano, guitar, etc.)
 
+## ⚙️ Configuration
 
+- **Config File**: `config/config.json` - Stores app settings
+- **Audio Cache**: `data/audio_cache/` - Temporary storage for downloads
+- **Output**: Separated tracks saved to your chosen output directory
 
-3. Run main.py
+## 🤖 YouTube API (Optional)
 
-```powershell
+For YouTube search functionality, you'll need a Google YouTube Data API v3 key:
+
+1. Go to [Google Cloud Console](https://console.developers.google.com/)
+2. Enable YouTube Data API v3
+3. Create an API key
+4. Enter the key when prompted in the app
+
+**Note**: You can still download from YouTube URLs without an API key - the search feature just won't work.
+
+## 🛠️ Troubleshooting
+
+### Windows Issues
+
+**"Python not found"**:
+- Install Python from [python.org](https://www.python.org/downloads/)
+- Make sure to check "Add Python to PATH" during installation
+- Restart Command Prompt after installation
+
+**"Permission denied" or antivirus warnings**:
+- Run Command Prompt as Administrator
+- Add SplitMe folder to antivirus exclusions
+- Some antivirus software flags Python installations
+
+### Mac Issues
+
+**"Cannot be opened" security warning**:
+- Right-click the launcher script → Open
+- Or run: `xattr -d com.apple.quarantine SplitMe-Launcher.sh`
+
+**Permission denied**:
+- Make script executable: `chmod +x SplitMe-Launcher.sh`
+
+### General Issues
+
+**App Won't Start**:
+- Check that Python 3.9+ is installed
+- Ensure internet connection for first-time dependency download
+- Try running setup scripts first
+
+**Poor Separation Quality**:
+- Use higher quality input audio (320kbps or lossless)
+- Try different AI models for different music types
+- Some heavily mixed songs are harder to separate
+
+**YouTube Downloads Fail**:
+- Check your internet connection
+- Some videos may be restricted or private
+- Try a different URL or video
+
+## 📋 System Requirements
+
+- **Windows**: Windows 10+ 
+- **Mac**: macOS 10.14+
+- **Linux**: Most modern distributions
+- **RAM**: 4GB minimum, 8GB+ recommended for larger files
+- **Storage**: 2GB free space for models and temporary files
+- **Internet**: Required for initial setup, YouTube downloads, and AI model downloads
+
+## 📦 What's Included
+
+This distribution includes:
+
+✅ **Complete Source Code**: All Python and JavaScript source files
+✅ **Cross-Platform Launchers**: Auto-setup scripts for Windows, Mac, and Linux  
+✅ **Mac Executables**: Pre-built optimized binaries for Mac users
+✅ **Auto-Setup**: Automatic virtual environment and dependency management
+✅ **Fallback Modes**: API-only mode if GUI dependencies aren't available
+
+## 🔧 Advanced Usage
+
+### Backend Binary (PyInstaller)
+
+```bash
+# Install build dependencies (first run)
+pip install pyinstaller
+
+# Build the backend bundle (outputs to dist/backend/)
+python scripts/build_backend.py --clean
+```
+
+### API-Only Mode
+
+```bash
+# Just the backend API server
 python main.py
+
+# Or directly:
+python -m uvicorn api.server:app --host 0.0.0.0 --port 8000
 ```
 
+### 📦 Packaging Desktop Releases
 
-## Credits
+We now ship a scripted workflow to produce installers with the bundled Python backend and Electron UI.
 
-- Developed by Justin Hild
-- Thanks to [Demucs](https://github.com/adefossez/demucs/tree/main) for creating the audio models and inspiring me to continue working on getting better quality data out.
-- Thanks also to [yt_dlp]([https://github.com/username/projec](https://github.com/yt-dlp/yt-dlp)t) for making pulling in sources to test on much easier.
+1. **Install build tooling** (once per machine):
+   ```bash
+   pip install pyinstaller
+   npm install --prefix frontend
+   ```
 
-## Web Deployment (VPS)
+2. **Build everything in one go** from the project root:
+   ```bash
+   python scripts/package_app.py --platform mac
+   # use --platform win or linux when building on those OSes
+   ```
 
-This repo now includes a web deployment path:
+   The script will:
+   - package the FastAPI backend with PyInstaller into `dist/backend/SplitMeBackend`
+   - run `npm run dist(:platform)` to create installers with Electron Builder
+   - write distributables to `release/`
 
-- `backend/app.py` runs FastAPI endpoints for file upload, stem split jobs, and zip download.
-- `frontend/` is a browser UI that submits jobs to the API.
-- `deploy/splitit-api.service` and `deploy/nginx-splitit.conf` are production templates.
+3. **Backend only** (optional):
+   ```bash
+   python scripts/build_backend.py --clean
+   ```
 
-### Local run (web mode)
+4. **Frontend only** (optional):
+   ```bash
+   npm run dist:mac   # or dist:win / dist:linux
+   ```
 
-In one terminal:
+> ℹ️  Build artifacts live in `dist/backend/` and the Electron outputs land in `release/`. These folders are ignored in git by default.
 
-```powershell
-cd backend
-pip install -r ..\requirements.txt
-pip install -r requirements-web.txt
-uvicorn app:app --reload --host 0.0.0.0 --port 8000
-```
+## 🎉 Ready to Split Some Stems?
 
-In a second terminal:
+**Windows users**: Double-click `SplitMe-Launcher-Windows.bat`  
+**Mac users**: Run `./SplitMe-Launcher.sh`  
+**Linux users**: Run `./setup.sh` then `./SplitMe-Launcher.sh`
 
-```powershell
-cd frontend
-npm install
-$env:REACT_APP_API_BASE="http://localhost:8000"
-npm run start
-```
+Turn any song into a karaoke version, extract that perfect drum loop, or isolate vocals for remixing!
 
-### Deploy to Linux VPS
-
-1. Clone repo into `/opt/splitit`.
-2. Create venv and install dependencies:
-
-```bash
-cd /opt/splitit
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -r backend/requirements-web.txt
-```
-
-3. Build frontend:
-
-```bash
-cd /opt/splitit/frontend
-npm ci
-npm run build
-mkdir -p /var/www/splitit
-cp -r dist/* /var/www/splitit/
-```
-
-4. Install systemd service:
-
-```bash
-cp /opt/splitit/deploy/splitit-api.service /etc/systemd/system/splitit-api.service
-systemctl daemon-reload
-systemctl enable --now splitit-api
-systemctl status splitit-api
-```
-
-5. Install Nginx config:
-
-```bash
-cp /opt/splitit/deploy/nginx-splitit.conf /etc/nginx/sites-available/splitit
-ln -sf /etc/nginx/sites-available/splitit /etc/nginx/sites-enabled/splitit
-nginx -t
-systemctl reload nginx
-```
-
-After this, open `http://YOUR_SERVER_IP` in a browser.
+**Happy stem splitting! 🎵**

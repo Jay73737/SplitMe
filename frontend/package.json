@@ -1,91 +1,108 @@
 {
-  "name": "splitit-frontend",
-  "version": "1.0.0",
+  "name": "stem-splitter-ui",
+  "version": "0.1.0",
   "private": true,
-  "description": "SplitIT - local audio stem splitter (Demucs + YouTube)",
-  "author": "Jay <jhildz737@gmail.com>",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Jay73737/SplitIT.git"
-  },
   "main": "electron.js",
-  "targets": {
-    "main": false,
-    "module": false,
-    "browser": false,
-    "types": false,
-    "default": {
-      "distDir": "dist",
-      "publicUrl": "./",
-      "context": "browser"
-    }
+  "dependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.6.4",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "@wavesurfer/react": "^1.0.11",
+    "framer-motion": "^11.18.2",
+    "node-fetch": "^2.7.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-scripts": "5.0.1",
+    "wavesurfer.js": "^7.10.1",
+    "web-vitals": "^2.1.4",
+    "ytdl-core": "^4.11.5",
+    "zustand": "^5.0.7"
   },
   "scripts": {
-    "start": "parcel public/index.html --port 1234",
-    "build": "parcel build public/index.html --dist-dir dist --public-url ./",
-    "electron": "electron electron.js",
-    "dev": "concurrently \"npm.cmd run start\" \"wait-on tcp:1234 && electron electron.js\"",
-    "backend:cpu": "python ../backend/build_backend.py --flavor cpu",
-    "backend:cuda": "python ../backend/build_backend.py --flavor cuda",
-    "pack": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --dir",
-    "dist": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
-    "dist:cpu": "npm run backend:cpu && npm run build && cross-env SPLITIT_FLAVOR=cpu CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder",
-    "dist:cuda": "npm run backend:cuda && npm run build && cross-env SPLITIT_FLAVOR=cuda CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "electron": "env -u ELECTRON_RUN_AS_NODE electron .",
+    "electron-dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && env -u ELECTRON_RUN_AS_NODE ELECTRON_START_URL=http://localhost:3000 electron .\"",
+    "dist": "npm run build && electron-builder",
+    "dist:mac": "npm run build && electron-builder --mac",
+    "dist:win": "npm run build && electron-builder --win",
+    "dist:linux": "npm run build && electron-builder --linux"
   },
-  "dependencies": {
-    "@tsamantanis/react-glassmorphism": "^1.1.4",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "cross-env": "^7.0.3",
-    "electron": "^30.5.1",
-    "electron-builder": "^25.1.8",
-    "parcel": "^2.12.0",
-    "wait-on": "^7.2.0"
+    "concurrently": "^9.2.0",
+    "cross-env": "^10.0.0",
+    "electron": "^37.2.5",
+    "electron-builder": "^24.13.3",
+    "wait-on": "^8.0.4"
   },
   "build": {
-    "appId": "com.splitit.app",
-    "productName": "SplitIT",
-    "publish": null,
-    "artifactName": "${productName}-${env.SPLITIT_FLAVOR}-${version}.${ext}",
+    "appId": "com.splitme.desktop",
+    "productName": "SplitMe",
+    "directories": {
+      "buildResources": "buildResources",
+      "output": "../release"
+    },
     "files": [
+      "build/**/*",
       "electron.js",
       "preload.js",
-      "dist/**/*",
+      "pill-preload.js",
       "package.json"
     ],
     "extraResources": [
       {
-        "from": "resources/backend",
-        "to": "backend",
-        "filter": [
-          "**/*"
-        ]
+        "from": "../dist/backend/SplitMeBackend",
+        "to": "backend"
       }
     ],
-    "directories": {
-      "output": "release",
-      "buildResources": "build"
+    "mac": {
+      "category": "public.app-category.music",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "buildResources/icon.png"
     },
     "win": {
-      "target": "nsis",
-      "signAndEditExecutable": false
-    },
-    "nsis": {
-      "oneClick": false,
-      "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true
-    },
-    "mac": {
-      "target": "dmg",
-      "category": "public.app-category.music"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        "zip"
+      ],
+      "icon": "buildResources/icon.png"
     },
     "linux": {
-      "target": "AppImage",
-      "category": "AudioVideo"
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "AudioVideo",
+      "icon": "buildResources/icon.png"
     }
   }
 }

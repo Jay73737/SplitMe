@@ -1,0 +1,444 @@
+
+> stem-splitter-ui@0.1.0 electron-dev
+> concurrently "npm start" "wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron ."
+
+[0] 
+[0] > stem-splitter-ui@0.1.0 start
+[0] > react-scripts start
+[0] 
+[0] (node:24705) [DEP_WEBPACK_DEV_SERVER_ON_AFTER_SETUP_MIDDLEWARE] DeprecationWarning: 'onAfterSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+[0] (Use `node --trace-deprecation ...` to show where the warning was created)
+[0] (node:24705) [DEP_WEBPACK_DEV_SERVER_ON_BEFORE_SETUP_MIDDLEWARE] DeprecationWarning: 'onBeforeSetupMiddleware' option is deprecated. Please use the 'setupMiddlewares' option.
+[0] Starting the development server...
+[0] 
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[1] Starting backend server...
+[1] Waiting for backend... (1/30)
+[1] Backend stderr: /Users/geet/SplitMe-1/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+[1]   warnings.warn(
+[1] 
+[1] Backend stderr: INFO:     Started server process [24787]
+[1] INFO:     Waiting for application startup.
+[1] 
+[1] Backend stderr: INFO:     Application startup complete.
+[1] 
+[1] Backend stderr: INFO:     Uvicorn running on http://127.0.0.1:5050 (Press CTRL+C to quit)
+[1] 
+[1] Backend stdout: INFO:     127.0.0.1:54827 - "GET /api/health HTTP/1.1" 200 OK
+[1] 
+[1] Backend server is ready!
+[1] Backend stdout: INFO:     127.0.0.1:54836 - "OPTIONS /api/download-audio HTTP/1.1" 200 OK
+[1] 
+[1] Backend stdout: INFO:     127.0.0.1:54837 - "OPTIONS /api/download-audio HTTP/1.1" 200 OK
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (1/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (1/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (2/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (2/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (3/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (3/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (1/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (1/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (2/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (2/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] 
+[1] Backend stderr: WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (3/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] WARNING: [youtube] HTTP Error 400: Bad Request. Retrying (3/3)...
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] WARNING: [youtube] Unable to download API page: HTTP Error 400: Bad Request (caused by <HTTPError 400: Bad Request>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+[1] 
+[1] Backend stderr: WARNING: [youtube] Unable to download API page: HTTP Error 400: Bad Request (caused by <HTTPError 400: Bad Request>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+[1] 
+[1] Backend stderr: WARNING: [youtube] YouTube said: ERROR - Precondition check failed.
+[1] WARNING: [youtube] Unable to download API page: HTTP Error 400: Bad Request (caused by <HTTPError 400: Bad Request>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+[1] 
+[1] Backend stderr: WARNING: [youtube] Unable to download API page: HTTP Error 400: Bad Request (caused by <HTTPError 400: Bad Request>); please report this issue on  https://github.com/yt-dlp/yt-dlp/issues?q= , filling out the appropriate issue template. Confirm you are on the latest version using  yt-dlp -U
+[1] 
+[1] Backend stderr: WARNING: [youtube] OF04pKp-r9o: Signature extraction failed: Some formats may be missing
+[1] 
+[1] Backend stderr: WARNING: Only images are available for download. use --list-formats to see them
+[1] 
+[1] Backend stderr: WARNING: [youtube] OF04pKp-r9o: Signature extraction failed: Some formats may be missing
+[1] 
+[1] Backend stderr: WARNING: Only images are available for download. use --list-formats to see them
+[1] 
+[1] Backend stdout: INFO:     127.0.0.1:54839 - "POST /api/download-audio HTTP/1.1" 200 OK
+[1] 
+[1] Backend stdout: INFO:     127.0.0.1:54839 - "GET /api/audio/6ede996d-9b20-4138-8561-3ff5b7a95461 HTTP/1.1" 200 OK
+[1] 
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[1] Stopping backend server...
+[1] wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron . exited with code 0
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 84:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 101:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:10:  'audioError' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:22:  'setAudioError' is assigned a value but never used                                                                                                                                                                                                                                                                             no-unused-vars
+[0]   Line 85:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 102:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:10:  'audioError' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:22:  'setAudioError' is assigned a value but never used                                                                                                                                                                                                                                                                             no-unused-vars
+[0]   Line 85:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 102:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:10:  'audioError' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 88:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 105:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:10:  'audioError' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 88:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 105:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:10:  'audioError' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 95:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 112:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 30:10:  'audioError' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 95:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 112:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 95:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 112:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 95:6:   React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 112:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[0] Compiling...
+[0] Compiled with warnings.
+[0] 
+[0] [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 103:6:  React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 120:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] Search for the keywords to learn more about each warning.
+[0] To ignore, add // eslint-disable-next-line to the line before.
+[0] 
+[0] WARNING in [eslint] 
+[0] src/DashboardView.js
+[0]   Line 14:16:  'setLoop' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:10:  'markers' is assigned a value but never used                                                                                                                                                                                                                                                                                   no-unused-vars
+[0]   Line 15:19:  'setMarkers' is assigned a value but never used                                                                                                                                                                                                                                                                                no-unused-vars
+[0]   Line 103:6:  React Hook useEffect has missing dependencies: 'backendAudioUrl', 'video.file', and 'video.filePath'. Either include them or remove the dependency array. If 'setBackendAudioUrl' needs the current value of 'video.filePath', you can also switch to useReducer instead of useState and read 'video.filePath' in the reducer  react-hooks/exhaustive-deps
+[0]   Line 120:9:  'progress' is assigned a value but never used                                                                                                                                                                                                                                                                                  no-unused-vars
+[0] 
+[0] src/YoutubePlayer.js
+[0]   Line 82:6:  React Hook useEffect has missing dependencies: 'onReady', 'onStateChange', 'onTime', 'playbackRate', and 'volume'. Either include them or remove the dependency array. If 'onReady' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+[0] 
+[0] src/components/WaveformPlayer.js
+[0]   Line 5:10:  'ws' is assigned a value but never used     no-unused-vars
+[0]   Line 6:10:  'ready' is assigned a value but never used  no-unused-vars
+[0] 
+[0] webpack compiled with 1 warning
+[0] npm start exited with code 0

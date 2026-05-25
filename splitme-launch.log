@@ -1,0 +1,65 @@
+========================================
+       SplitMe - Audio Stem Separation
+========================================
+
+🎵 Starting SplitMe Application for Mac...
+
+⚠️  Mac executables not found - running from source
+
+✅ Python3 found
+🔧 Activating virtual environment...
+✅ Python environment ready
+
+✅ Node.js found
+✅ Frontend dependencies ready
+
+🚀 Starting backend API server...
+⏳ Waiting for backend to initialize...
+/Users/geet/SplitMe-1/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+INFO:     Started server process [24597]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+🖥️  Starting frontend application...
+
+✅ SplitMe is now running!
+🌐 Backend: Running
+🖥️  Frontend: Running
+
+Press Ctrl+C to stop the application...
+
+> stem-splitter-ui@0.1.0 electron
+> electron .
+
+Starting backend server...
+Waiting for backend... (1/30)
+Backend stderr: /Users/geet/SplitMe-1/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+
+Backend stderr: INFO:     Started server process [24619]
+INFO:     Waiting for application startup.
+
+Backend stderr: INFO:     Application startup complete.
+
+Backend stderr: INFO:     Uvicorn running on http://127.0.0.1:5050 (Press CTRL+C to quit)
+
+Backend stdout: INFO:     127.0.0.1:54778 - "GET /api/health HTTP/1.1" 200 OK
+
+Backend server is ready!
+(node:24616) electron: Failed to load URL: http://localhost:3000/ with error: ERR_CONNECTION_REFUSED
+(Use `Electron --trace-warnings ...` to show where the warning was created)
+
+🛑 Shutting down SplitMe...
+👋 Goodbye!
+Stopping backend server...
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24597]
+Backend stderr: INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [24619]
+
+Backend process exited with code
